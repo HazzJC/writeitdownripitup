@@ -299,26 +299,68 @@
 }
 
 /* ── curled corner, bottom right ────────────────────────────────────────── */
+
+/* A lifted corner is a triangular fold: you see the *back* of the paper, which
+   is dimmer than the front because it faces away from the candle, with a hard
+   crease along the fold and a shadow cast on the sheet beneath it. The previous
+   version was a pale rounded blob that read as a sticker rather than as paper. */
 #page-sheet .curl {
   position: absolute;
   right: 0; bottom: 0;
-  width: 12%;
+  width: clamp(42px, 5.6%, 76px);
   aspect-ratio: 1;
-  background:
-    linear-gradient(315deg,
-      rgba(240, 232, 208, .95) 0%,
-      rgba(206, 192, 158, .9) 42%,
-      rgba(120, 102, 68, .55) 66%,
-      rgba(0,0,0,0) 67%);
-  filter: brightness(calc(.35 + var(--candle) * .55)) drop-shadow(-4px -4px 8px rgba(0,0,0,.5));
   pointer-events: none;
   z-index: 2;
+  /* The underside of the sheet. Slightly lighter and cleaner than the front —
+     it is the side that has not been handled or written on — and falling off
+     toward the fold, where it turns away from the candle.
+
+     It carries the same paper scan as the front. Without it the fold is a flat
+     wash of colour next to a textured surface, which reads as a sticker stuck
+     on the corner rather than as the sheet itself. */
+  background-color: var(--stock-tint, #e6d8b6);
+  background-image:
+    linear-gradient(315deg,
+      color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #fdf3dd) 0%,
+      color-mix(in srgb, var(--stock-tint, #e6d8b6) 94%, #e8d8b4) 22%,
+      color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #a8916a) 48%,
+      color-mix(in srgb, var(--stock-tint, #e6d8b6) 62%, #6a5738) 60%,
+      color-mix(in srgb, var(--stock-tint, #e6d8b6) 48%, #43361f) 63%),
+    var(--stock-image, none);
+  background-size: auto, 340% auto;
+  background-position: 0 0, 62% 74%;
+  background-blend-mode: multiply, multiply;
+  /* The fold runs corner to corner. */
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  filter: brightness(calc(.48 + var(--candle) * .40 + var(--flash) * .4)) saturate(1.04);
 }
 
-/* Machine-cut stock has no torn edge. */
-#page-sheet.cut::before,
-#page-sheet.cut::after { filter: brightness(calc(.30 + var(--candle) * .40 + var(--flash) * .55)); }
-#page-sheet.cut::after { filter: none; opacity: calc((.16 + var(--candle) * .30) * var(--stock-grain, 1)); }
+/* The shadow the lifted corner drops onto the sheet under it. */
+#page-sheet .curl::before {
+  content: '';
+  position: absolute;
+  right: -4%; bottom: -4%;
+  width: 108%; height: 108%;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  background: rgba(30, 21, 10, .48);
+  filter: blur(6px);
+  transform: translate(-11%, -11%);
+  z-index: -1;
+}
+
+/* And the crease: paper does not fold to a knife edge, so this is a soft
+   band rather than a drawn line. */
+#page-sheet .curl::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg,
+    rgba(0,0,0,0) 44%,
+    rgba(255, 240, 206, calc(.16 * var(--candle))) 48%,
+    rgba(255, 248, 222, calc(.30 * var(--candle))) 50%,
+    rgba(122, 100, 62, .22) 53%,
+    rgba(0,0,0,0) 58%);
+}
 
 /* ── the offering: the page is carried to the flame ─────────────────────── */
 #page.offering {

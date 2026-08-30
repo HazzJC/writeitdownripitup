@@ -413,6 +413,10 @@ export class Paper {
   scrollCaretIntoView() {
     const sheet = this.el.parentElement;
     if (!sheet) return;
+    // The sheet is a fixed width and never scrolls sideways. Belt and braces:
+    // the browser will still scroll a too-wide line into view even under
+    // overflow-x: hidden, which shifts every other line off the page with it.
+    if (this.el.scrollLeft !== 0) this.el.scrollLeft = 0;
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
     const r = sel.getRangeAt(0);
@@ -534,16 +538,32 @@ export class Paper {
 
       const wordRot = ((hash01(startOffset + start, this.seed + 3) * 2 - 1)
         * 0.9 * this.hand.jitter * (1 + this.agitation * 0.6)).toFixed(2);
-      parts.push(`<span class="w" style="--wr:${wordRot}deg">`);
-      for (let k = 0; k < word.length; k++) {
-        const abs = startOffset + start + k;
-        const g = this.glyphStyle(abs, lineIndex, col + k, k === 0);
-        parts.push(
-          `<span class="c" style="--dx:${g.dx}em;--dy:${g.dy}em;--r:${g.rot}deg;` +
-          `--s:${g.scale};--f:${g.flow.toFixed(3)}">${escapeHtml(word[k])}</span>`
-        );
+
+      // Words are wrapped in a `nowrap` span so a line break can never land
+      // between two letters of the same word. That is right for words, and
+      // catastrophic for a single unbroken string of a hundred characters:
+      // nothing can break it, so it runs off the sheet and drags the rest of
+      // the page sideways with it.
+      //
+      // So past a plausible word length, the run is emitted as several spans
+      // instead of one. They share a rotation, so it still reads as one piece
+      // of writing, but the browser can now break between the chunks.
+      const CHUNK_AT = 18;
+      const chunk = word.length > CHUNK_AT ? 3 : word.length;
+
+      for (let c0 = 0; c0 < word.length; c0 += chunk) {
+        parts.push(`<span class="w" style="--wr:${wordRot}deg">`);
+        const end = Math.min(word.length, c0 + chunk);
+        for (let k = c0; k < end; k++) {
+          const abs = startOffset + start + k;
+          const g = this.glyphStyle(abs, lineIndex, col + k, k === 0);
+          parts.push(
+            `<span class="c" style="--dx:${g.dx}em;--dy:${g.dy}em;--r:${g.rot}deg;` +
+            `--s:${g.scale};--f:${g.flow.toFixed(3)}">${escapeHtml(word[k])}</span>`
+          );
+        }
+        parts.push('</span>');
       }
-      parts.push('</span>');
       col += word.length;
     }
     return parts.join('');

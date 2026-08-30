@@ -1,5 +1,6 @@
 /**
- * Set dressing on the desk: book stacks and a jar of dried stems.
+ * Set dressing on the desk: a jar of dried stems, a cup someone has been
+ * drinking from, and the unopened post.
  *
  * Drawn on canvas rather than with CSS gradients so that every surface can be
  * shaded by its actual angle to the candle. When the flame gutters, the books
@@ -39,36 +40,35 @@ export class PropsRenderer {
     const deskY = h * 0.44;
     const unit = Math.min(w * 0.055, h * 0.075);
 
-    // --- left stack: books lying flat, as in the reference ---------------
-    this.leftStack = [];
-    let y = h * 0.72;
-    const covers = ['#3a2415', '#4d2f18', '#2e1c10', '#5a3a1e', '#412714'];
-    for (let i = 0; i < 5; i++) {
-      const bw = unit * rand(2.5, 3.4);
-      const bh = unit * rand(0.28, 0.46);
-      this.leftStack.push({
-        x: w * 0.085 + rng() * unit * 0.5 - unit * 0.25,
-        y,
-        w: bw, h: bh,
-        rot: (rng() - 0.5) * 0.055,
-        cover: covers[i % covers.length],
-        pages: `hsl(${38 + rng() * 10}, ${22 + rng() * 14}%, ${62 + rng() * 12}%)`,
-      });
-      y -= bh * 0.96;
-    }
+    // The pile on the left is no longer painted here. It is the paper stock
+    // selector now — a real stack of notebooks and pads you take a sheet from,
+    // built as DOM in src/ui/desk.js so it can be focused and labelled. Two
+    // stacks of books occupying the same corner is what made the old selector
+    // look like it was floating on top of the furniture.
 
-    // --- right: books standing, leaning together ------------------------
-    this.rightStack = [];
-    let x = w * 0.885;
+    // --- right: a cup someone has been drinking from, and the post ------
+    // Books here were four dark slabs with hard elliptical shadows that served
+    // no purpose. A cup gone cold and a bundle of unopened post say far more
+    // about somebody living at this desk, and both are shapes that can carry
+    // real shading — a glazed rim, a shadow inside the cup, paper edges.
+    this.cup = {
+      x: w * 0.855,
+      y: h * 0.525,
+      r: unit * 0.5,
+      turn: rng() * 0.5 - 0.25,
+    };
+
+    this.letters = [];
     for (let i = 0; i < 4; i++) {
-      const bw = unit * rand(0.46, 0.9);
-      const bh = unit * rand(1.4, 2.2);
-      this.rightStack.push({
-        x, y: h * 0.60, w: bw, h: bh,
-        rot: (rng() - 0.5) * 0.13 + 0.03,
-        cover: covers[(i + 2) % covers.length],
+      this.letters.push({
+        x: w * 0.735 + rng() * unit * 0.1,
+        y: h * 0.585 - i * unit * 0.05,
+        w: unit * (1.32 + rng() * 0.2),
+        h: unit * 0.74,
+        rot: (rng() - 0.5) * 0.22,
+        tone: ['#d8cbaa', '#cfc4a6', '#ded2b4', '#c9bc9c'][i % 4],
+        stamped: i === 3,
       });
-      x += bw * 1.04;
     }
 
     // --- jar of dried stems ---------------------------------------------
@@ -176,103 +176,185 @@ export class PropsRenderer {
     g.clearRect(0, 0, this.w, this.h);
     this.drawLightPool(g);
     this.drawJar(g);
-    this.drawLeftStack(g);
-    this.drawRightStack(g);
+    this.drawLetters(g);
+    this.drawCup(g);
   }
 
-  // ------------------------------------------------------------- books
-  drawLeftStack(g) {
-    for (const b of this.leftStack) {
-      g.save();
-      g.translate(b.x, b.y);
-      g.rotate(b.rot);
+  /**
+   * A soft contact shadow.
+   *
+   * The old props each had one flat 55%-black ellipse under them, which is what
+   * made them look pasted on. A real shadow has two parts: a small, dark, tight
+   * core where the object actually meets the wood, and a much wider, fainter
+   * penumbra around it — and both are cast *away* from the light rather than
+   * sitting centred underneath.
+   */
+  softShadow(g, x, y, rx, ry, strength = 1) {
+    const L = this.lighting;
+    const dx = x - L.candle.x;
+    const dy = y - L.candle.y;
+    const d = Math.hypot(dx, dy) || 1;
+    // Longer, fainter shadows further from the flame.
+    const throwBy = Math.min(rx * 1.5, d * 0.055);
+    const ox = (dx / d) * throwBy;
+    const oy = (dy / d) * throwBy * 0.4;
+    const lit = clamp01(L.candle.value);
 
-      // Contact shadow underneath.
-      g.fillStyle = 'rgba(0,0,0,0.55)';
+    g.save();
+    // Penumbra.
+    let gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rx * 2.1);
+    gr.addColorStop(0, `rgba(0,0,0,${0.46 * strength * lit})`);
+    gr.addColorStop(0.45, `rgba(0,0,0,${0.24 * strength * lit})`);
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr;
+    g.save();
+    g.translate(x + ox, y + oy);
+    g.scale(1, (ry * 2.1) / (rx * 2.1));
+    g.beginPath(); g.arc(0, 0, rx * 2.1, 0, TAU); g.fill();
+    g.restore();
+
+    // Contact core — small, tight, and much darker.
+    gr = g.createRadialGradient(x, y, 0, x, y, rx * 0.9);
+    gr.addColorStop(0, `rgba(0,0,0,${0.78 * strength})`);
+    gr.addColorStop(0.6, `rgba(0,0,0,${0.36 * strength})`);
+    gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr;
+    g.save();
+    g.translate(x, y);
+    g.scale(1, ry / rx);
+    g.beginPath(); g.arc(0, 0, rx * 0.9, 0, TAU); g.fill();
+    g.restore();
+    g.restore();
+  }
+
+  // ------------------------------------------------------------ the cup
+  drawCup(g) {
+    const c = this.cup;
+    if (!c) return;
+    const r = c.r;
+    const litFront = this.shade(c.x, c.y, -1);
+    const litSide = this.shade(c.x + r, c.y, 1);
+    const lit = clamp01(this.lighting.candle.value);
+
+    this.softShadow(g, c.x, c.y + r * 0.34, r * 1.5, r * 0.42, 1);
+
+    g.save();
+    g.translate(c.x, c.y);
+    g.rotate(c.turn * 0.1);
+
+    // Saucer.
+    const sr = r * 1.62;
+    const sa = g.createLinearGradient(-sr, 0, sr, 0);
+    sa.addColorStop(0, this.tint('#d8cdb6', litFront * 0.68));
+    sa.addColorStop(0.45, this.tint('#f4ecd8', litSide * 1.02));
+    sa.addColorStop(1, this.tint('#c4b79c', litSide * 0.76));
+    g.fillStyle = sa;
+    g.beginPath(); g.ellipse(0, r * 0.3, sr, sr * 0.34, 0, 0, TAU); g.fill();
+    // The well of the saucer.
+    g.fillStyle = this.tint('#b3a68c', litFront * 0.7);
+    g.beginPath(); g.ellipse(0, r * 0.28, sr * 0.62, sr * 0.2, 0, 0, TAU); g.fill();
+
+    // The handle, behind the cup body so the join is hidden.
+    g.strokeStyle = this.tint('#ece2cc', litSide * 0.92);
+    g.lineWidth = Math.max(2, r * 0.15);
+    g.beginPath();
+    g.arc(r * 0.92, -r * 0.16, r * 0.42, -1.25, 1.25);
+    g.stroke();
+
+    // Body: a slight taper, brightest where it turns toward the flame.
+    const body = g.createLinearGradient(-r, 0, r, 0);
+    body.addColorStop(0, this.tint('#cdc0a6', litFront * 0.56));
+    body.addColorStop(0.3, this.tint('#f6efdc', litFront * 1.0));
+    body.addColorStop(0.62, this.tint('#fbf5e4', litSide * 1.08));
+    body.addColorStop(1, this.tint('#bbae94', litSide * 0.68));
+    g.fillStyle = body;
+    g.beginPath();
+    g.moveTo(-r * 0.86, -r * 0.62);
+    g.lineTo(-r * 0.7, r * 0.24);
+    g.quadraticCurveTo(0, r * 0.5, r * 0.7, r * 0.24);
+    g.lineTo(r * 0.86, -r * 0.62);
+    g.closePath();
+    g.fill();
+
+    // The rim, and the shadowed inside of the cup.
+    g.fillStyle = this.tint('#fdf7e6', litSide * 1.1);
+    g.beginPath(); g.ellipse(0, -r * 0.62, r * 0.86, r * 0.26, 0, 0, TAU); g.fill();
+    g.fillStyle = this.tint('#4a4034', litFront * 0.7);
+    g.beginPath(); g.ellipse(0, -r * 0.6, r * 0.75, r * 0.2, 0, 0, TAU); g.fill();
+    // What is left of the tea, gone cold.
+    g.fillStyle = this.tint('#6b4a28', litFront * 0.85);
+    g.beginPath(); g.ellipse(0, -r * 0.5, r * 0.6, r * 0.15, 0, 0, TAU); g.fill();
+    // The flame catching the surface of it.
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const tea = g.createRadialGradient(r * 0.22, -r * 0.52, 0, r * 0.22, -r * 0.52, r * 0.5);
+    tea.addColorStop(0, `rgba(255, 178, 92, ${0.5 * lit})`);
+    tea.addColorStop(1, 'rgba(255, 140, 60, 0)');
+    g.fillStyle = tea;
+    g.beginPath(); g.ellipse(0, -r * 0.5, r * 0.6, r * 0.15, 0, 0, TAU); g.fill();
+    g.restore();
+
+    // Glaze: a vertical specular streak down the side facing the candle.
+    g.save();
+    g.globalCompositeOperation = 'lighter';
+    const gl = g.createLinearGradient(r * 0.1, 0, r * 0.8, 0);
+    gl.addColorStop(0, 'rgba(255, 236, 208, 0)');
+    gl.addColorStop(0.5, `rgba(255, 240, 214, ${0.30 * lit})`);
+    gl.addColorStop(1, 'rgba(255, 236, 208, 0)');
+    g.fillStyle = gl;
+    g.fillRect(r * 0.1, -r * 0.55, r * 0.7, r * 0.9);
+    g.restore();
+
+    g.restore();
+  }
+
+  // -------------------------------------------------------- the letters
+  drawLetters(g) {
+    if (!this.letters) return;
+    for (const l of this.letters) {
+      const lit = this.shade(l.x, l.y, 0);
+      const litL = this.shade(l.x - l.w / 2, l.y, -1);
+
+      this.softShadow(g, l.x, l.y + l.h * 0.34, l.w * 0.5, l.h * 0.22, 0.7);
+
+      g.save();
+      g.translate(l.x, l.y);
+      g.rotate(l.rot);
+
+      const face = g.createLinearGradient(-l.w / 2, 0, l.w / 2, 0);
+      face.addColorStop(0, this.tint(l.tone, litL * 0.72));
+      face.addColorStop(0.5, this.tint(l.tone, lit * 1.0));
+      face.addColorStop(1, this.tint(l.tone, lit * 0.82));
+      g.fillStyle = face;
       g.beginPath();
-      g.ellipse(0, b.h * 0.5, b.w * 0.54, b.h * 0.3, 0, 0, TAU);
+      g.moveTo(-l.w / 2, -l.h / 2);
+      g.lineTo(l.w / 2, -l.h / 2 + l.h * 0.03);
+      g.lineTo(l.w / 2, l.h / 2);
+      g.lineTo(-l.w / 2, l.h / 2 - l.h * 0.02);
+      g.closePath();
       g.fill();
 
-      const litTop = this.shade(b.x, b.y - b.h, 0);
-      const litRight = this.shade(b.x + b.w / 2, b.y, 1);
-      const litLeft = this.shade(b.x - b.w / 2, b.y, -1);
+      // The flap, and a darker line where it meets the body.
+      g.strokeStyle = this.tint(l.tone, lit * 0.55);
+      g.lineWidth = Math.max(0.8, l.h * 0.02);
+      g.beginPath();
+      g.moveTo(-l.w / 2, -l.h / 2);
+      g.lineTo(0, l.h * 0.08);
+      g.lineTo(l.w / 2, -l.h / 2 + l.h * 0.03);
+      g.stroke();
 
-      // The block of pages: a warm cream face with fine striations.
-      const pg = g.createLinearGradient(-b.w / 2, 0, b.w / 2, 0);
-      pg.addColorStop(0, this.tint('#9c8a68', litLeft * 0.85));
-      pg.addColorStop(0.5, this.tint('#b3a179', litTop));
-      pg.addColorStop(1, this.tint('#8d7c5c', litRight * 0.9));
-      g.fillStyle = pg;
-      g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
-
-      // Page edges.
-      g.globalAlpha = 0.22;
-      g.strokeStyle = 'rgba(60,44,26,1)';
-      g.lineWidth = 0.6;
-      for (let i = 1; i < 7; i++) {
-        const yy = -b.h / 2 + (b.h * i) / 7;
+      // One of them has been franked.
+      if (l.stamped) {
+        g.fillStyle = this.tint('#8a4a3c', lit * 1.1);
+        g.fillRect(l.w * 0.24, -l.h * 0.34, l.w * 0.15, l.h * 0.3);
+        g.globalAlpha = 0.5;
+        g.strokeStyle = this.tint('#3a2c20', lit);
+        g.lineWidth = Math.max(0.7, l.h * 0.018);
         g.beginPath();
-        g.moveTo(-b.w / 2 + 1, yy);
-        g.lineTo(b.w / 2 - 1, yy);
+        g.arc(l.w * 0.315, -l.h * 0.19, l.h * 0.19, 0, TAU);
         g.stroke();
+        g.globalAlpha = 1;
       }
-      g.globalAlpha = 1;
-
-      // The cover, overhanging top and bottom.
-      const cv = g.createLinearGradient(-b.w / 2, 0, b.w / 2, 0);
-      cv.addColorStop(0, this.tint(b.cover, litLeft * 0.7));
-      cv.addColorStop(0.45, this.tint(b.cover, litTop * 1.15));
-      cv.addColorStop(1, this.tint(b.cover, litRight * 0.75));
-      g.fillStyle = cv;
-      g.fillRect(-b.w / 2 - b.w * 0.012, -b.h / 2 - b.h * 0.16, b.w * 1.024, b.h * 0.20);
-      g.fillRect(-b.w / 2 - b.w * 0.012, b.h / 2 - b.h * 0.04, b.w * 1.024, b.h * 0.20);
-
-      // A gold rule on the top board, catching the flame.
-      g.globalAlpha = clamp01(litTop * 1.4);
-      g.strokeStyle = 'rgba(198, 158, 84, 0.55)';
-      g.lineWidth = 0.8;
-      g.strokeRect(-b.w / 2 + b.w * 0.05, -b.h / 2 - b.h * 0.12, b.w * 0.9, b.h * 0.12);
-      g.globalAlpha = 1;
-      g.restore();
-    }
-  }
-
-  drawRightStack(g) {
-    for (const b of this.rightStack) {
-      g.save();
-      g.translate(b.x, b.y);
-      g.rotate(b.rot);
-
-      g.fillStyle = 'rgba(0,0,0,0.5)';
-      g.beginPath();
-      g.ellipse(0, 0, b.w * 0.9, b.w * 0.4, 0, 0, TAU);
-      g.fill();
-
-      const litL = this.shade(b.x - b.w / 2, b.y - b.h / 2, -1);
-      const litR = this.shade(b.x + b.w / 2, b.y - b.h / 2, 1);
-
-      // Spine facing us.
-      const sp = g.createLinearGradient(-b.w / 2, 0, b.w / 2, 0);
-      sp.addColorStop(0, this.tint(b.cover, litL * 0.55));
-      sp.addColorStop(0.35, this.tint(b.cover, (litL + litR) * 0.62));
-      sp.addColorStop(1, this.tint(b.cover, litR * 0.75));
-      g.fillStyle = sp;
-      g.fillRect(-b.w / 2, -b.h, b.w, b.h);
-
-      // Raised bands and a gilt title block.
-      const lit = (litL + litR) * 0.5;
-      g.globalAlpha = clamp01(lit * 1.5);
-      g.fillStyle = 'rgba(190, 152, 80, 0.5)';
-      for (const f of [0.22, 0.45, 0.72]) {
-        g.fillRect(-b.w / 2, -b.h * f, b.w, Math.max(1, b.h * 0.014));
-      }
-      g.fillStyle = 'rgba(206, 170, 96, 0.35)';
-      g.fillRect(-b.w * 0.3, -b.h * 0.62, b.w * 0.6, b.h * 0.1);
-      g.globalAlpha = 1;
-
-      // Top edge of the pages.
-      g.fillStyle = this.tint('#9e8c68', this.shade(b.x, b.y - b.h, 0) * 0.9);
-      g.fillRect(-b.w / 2, -b.h - b.w * 0.1, b.w, b.w * 0.1);
       g.restore();
     }
   }

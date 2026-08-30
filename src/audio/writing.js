@@ -119,6 +119,50 @@ export class WritingVoice {
     };
   }
 
+  /**
+   * Glass set down on wood: a short bright ring with a soft knock under it.
+   *
+   * Two struck partials rather than one — a real bottle rings at more than one
+   * frequency, and a single sine reads as a notification chime. They are
+   * deliberately inharmonic (the upper is ~2.7x, not an octave), which is what
+   * makes it glass rather than a bell.
+   */
+  clink(pitch = 1, level = 0.5) {
+    if (!this.core.ready) return;
+    const core = this.core;
+    const ctx = core.ctx;
+    const t = ctx.currentTime;
+    const f0 = rand(1650, 2350) * pitch;
+
+    for (const [mul, amp, decay] of [[1, 1, 0.34], [2.71, 0.4, 0.2], [5.3, 0.13, 0.11]]) {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f0 * mul;
+      const g = core.gain(0);
+      o.connect(g); g.connect(this.out);
+      const peak = 0.055 * amp * level;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + decay * rand(0.8, 1.2));
+      o.start(t); o.stop(t + decay + 0.05);
+      o.onended = () => { try { o.disconnect(); g.disconnect(); } catch (_) {} };
+    }
+
+    // The knock of the base meeting the desk, under the ring.
+    const src = ctx.createBufferSource();
+    src.buffer = core.whiteBuffer;
+    src.loop = true;
+    src.playbackRate.value = rand(0.6, 1.0);
+    const lp = core.filter('lowpass', rand(340, 600), 1.4);
+    const kg = core.gain(0);
+    src.connect(lp); lp.connect(kg); kg.connect(this.out);
+    kg.gain.setValueAtTime(0, t);
+    kg.gain.linearRampToValueAtTime(0.05 * level, t + 0.003);
+    kg.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+    src.start(t); src.stop(t + 0.12);
+    src.onended = () => { try { src.disconnect(); lp.disconnect(); kg.disconnect(); } catch (_) {} };
+  }
+
   /** Paper being moved, turned or lifted. */
   rustle(level = 0.5, dur = 0.55) {
     if (!this.core.ready) return;

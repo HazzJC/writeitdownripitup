@@ -166,6 +166,20 @@ tinted copy and only rebuilds when the colour would visibly differ — quantised
 to four levels, which turns a continuous fade from four rebuilds a frame into a
 handful in total.
 
+The cottage across the field is drawn *lit* rather than cut out of a
+silhouette. A hole in a silhouette gives you a bright rectangle floating in the
+dark with no building around it; a wall you can see, with light spilling down it
+from its own windows and a slate roof catching the sky, is what makes the
+windows read as windows. Its openings are deliberately different sizes at
+different heights — two matching lit rectangles side by side read unmistakably
+as a pair of eyes.
+
+The trees bend with the storm. The layers are cached bitmaps, so the bend is a
+horizontal skew — full displacement at the top of the frame, none at the
+bottom, pivoting the trunks about their roots. Drawing it as a stack of shifted
+bands gives a truer curved flex and costs a draw call per band per layer per
+frame; at this distance the difference is not visible and the cost is.
+
 Three textures are generated at startup and handed to CSS as data URIs
 ([src/scene/textures.js](src/scene/textures.js)): a panel of cotton lace for
 the curtains, soft grime for the glass, and film grain over everything. The
@@ -207,8 +221,8 @@ There are no menus. Every control is the object it controls:
 | Object | What it is |
 | --- | --- |
 | The tray, bottom left | Five instruments. Click one and it lifts out. |
-| The bottles | Six inks. The chosen one stands open. Graphite and charcoal carry their own colour, so the bottles dim. |
-| The stack, far left | Four paper stocks — parchment, letter, ruled notebook, squared ledger. |
+| The bottles | Six inks. The chosen one stands open, and clinks as it is set down — pitched down the row, so the six are audibly distinct. Graphite and charcoal carry their own colour, so the bottles dim. |
+| The pile, far left | Four paper stocks, each as the object that paper comes out of — a bundle of loose sheets, a block of writing paper, a bound notebook, a ledger. |
 | The specimen booklet | Twelve hands. Flip its pages. |
 | The wax seal | Press and hold to finish. |
 | The tab on the page corner | This document, the settings, and a plain text box. |
