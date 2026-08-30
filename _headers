@@ -18,6 +18,15 @@
 /assets/textures/*
   Cache-Control: public, max-age=86400, must-revalidate
 
+# The desktop build, served from here so nobody has to visit GitHub to get
+# it. Not hashed and it will be replaced in place on the next release, so it
+# revalidates rather than being pinned. Content-Disposition makes the browser
+# save it rather than trying to navigate to it.
+/Ritual.exe
+  Cache-Control: public, max-age=3600, must-revalidate
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment; filename="Ritual.exe"
+
 # Deliberately nothing for /src/* and /styles/*. Those filenames are not
 # hashed either, and pinning a long max-age on them would leave returning
 # visitors running old code with no way to tell them otherwise. Pages' default

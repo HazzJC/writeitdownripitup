@@ -593,5 +593,20 @@ function registerServiceWorker() {
   });
 }
 
+/**
+ * Reveal the Windows download on the opening card.
+ *
+ * Only on http(s): in the desktop build and the single-file build the link
+ * would point at a Ritual.exe that is not there, and in both cases the person
+ * reading it has already downloaded the thing it is offering.
+ */
+function offerDesktopDownload() {
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
+  if (window.__TAURI__ || window.__TAURI_INTERNALS__) return;
+  const el = document.querySelector('.th-get');
+  if (el) el.hidden = false;
+}
+
 new Ritual();
 registerServiceWorker();
+offerDesktopDownload();

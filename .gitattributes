@@ -1,0 +1,9 @@
+# Git's autocrlf is on for this checkout, and a stray line-ending conversion
+# would silently corrupt a binary. Auto-detection normally catches these, but
+# a broken 4.7MB download is not a thing to leave to inference.
+*.exe   binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff2 binary
+*.woff  binary

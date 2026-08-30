@@ -22,6 +22,10 @@ offer to install it as a proper app with its own window and icon.
 One file, 4.7 MB. Save it wherever you like, double-click it, and write. There
 is no installer and nothing to set up.
 
+The same file is served from the site itself at
+<https://ritual.harryjameschapman.com/Ritual.exe>, and there is a quiet link to
+it on the opening screen, so nobody has to come to GitHub to get it.
+
 The first time you run it, Windows will show a blue box saying **"Windows
 protected your PC"**. This is not a virus warning. It appears for every program
 that has not paid for a code-signing certificate, and this one has not. Click
