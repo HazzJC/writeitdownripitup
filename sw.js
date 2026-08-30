@@ -11,7 +11,7 @@
  * new cache name, and the old one is deleted on activate.
  */
 
-const VERSION = 'e4cc24d84b31';
+const VERSION = 'a2438d1da458';
 const CACHE = `ritual-${VERSION}`;
 
 const PRECACHE = [

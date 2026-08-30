@@ -596,9 +596,9 @@ function registerServiceWorker() {
 /**
  * Reveal the Windows download on the opening card.
  *
- * Only on http(s): in the desktop build and the single-file build the link
- * would point at a Ritual.exe that is not there, and in both cases the person
- * reading it has already downloaded the thing it is offering.
+ * Only on http(s). The link goes to the GitHub releases page, so it would
+ * resolve anywhere, but in the desktop build and the single-file build the
+ * person reading it has already got the thing it is offering.
  */
 function offerDesktopDownload() {
   if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
