@@ -3,19 +3,46 @@
 **Write it down. Let it go.**
 
 A writing ritual on a rainy desk. You pick up a pen, choose an ink and a sheet,
-and write. The weather outside the window answers what you do — rain thickens,
-wind rises, thunder closes in — and when you are finished you hold a wax seal
-until the storm breaks, let go, and the candle takes the page.
+and write. The weather outside the window answers what you do. Rain thickens,
+wind rises, thunder closes in. When you are finished you hold a wax seal until
+the storm breaks, let go, and the candle takes the page.
 
 Nothing is saved. There is no server and no storage. When it burns, it is gone.
 
-Live at **<https://ritual.harryjameschapman.com>**.
+## Get it
 
-## Running and building
+**Open it in your browser at <https://ritual.harryjameschapman.com>.** Nothing
+to install. It works offline after the first visit, and Edge and Chrome will
+offer to install it as a proper app with its own window and icon.
+
+**Or download it for Windows:**
+
+### [Download Ritual for Windows](https://github.com/HazzJC/writeitdownripitup/releases/latest/download/Ritual.exe)
+
+One file, 4.7 MB. Save it wherever you like, double-click it, and write. There
+is no installer and nothing to set up.
+
+The first time you run it, Windows will show a blue box saying **"Windows
+protected your PC"**. This is not a virus warning. It appears for every program
+that has not paid for a code-signing certificate, and this one has not. Click
+**More info**, then **Run anyway**. Windows only asks once.
+
+If you would rather have Ritual in your Start menu, there is an installer on
+the [releases page](https://github.com/HazzJC/writeitdownripitup/releases/latest)
+as well. Either is fine; the app is identical.
+
+The opening screen of the web version links to that same page, so people can
+find the download without being told it exists.
+
+---
+
+## Running from source
+
+Everything below is for developers. You do not need any of it to use Ritual.
 
 ```bash
 npm start              # dev server on http://localhost:5173
-npm run build:single   # dist/ritual.html  — the whole app in one file
+npm run build:single   # dist/ritual.html, the whole app in one file
 npm run build:desktop  # a Windows .exe and installer
 ```
 
@@ -46,6 +73,12 @@ so it renders identically to the site. Rust's only job is to open the window; no
 commands are registered and no capabilities are granted, because the app asks
 the host for nothing. Build prerequisites are Rust, MSVC build tools, and
 WebView2. It is unsigned, so Windows shows a SmartScreen prompt on first run.
+
+The built binary is published to GitHub releases and is deliberately **not**
+committed. Git keeps every version of every file forever, so a 4.7 MB artefact
+added on each build would grow the repository without bound, for a file that is
+rebuilt from source anyway. The site links to the releases page rather than
+serving its own copy, for the same reason.
 
 ### Regenerating
 

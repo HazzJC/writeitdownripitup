@@ -653,6 +653,24 @@
   letter-spacing: .1em;
   color: #6f6350;
 }
+/* Quieter still than the note above it: there if you want it, easy to ignore. */
+.th-get {
+  margin-top: .9em;
+  font-size: clamp(10px, .82vw, 13px);
+  letter-spacing: .08em;
+}
+.th-get a {
+  color: #5d5344;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(93, 83, 68, .35);
+  padding-bottom: 1px;
+  transition: color .25s ease, border-color .25s ease;
+}
+.th-get a:hover,
+.th-get a:focus-visible {
+  color: #9a8a6a;
+  border-color: rgba(154, 138, 106, .7);
+}
 
 /* ══════════════════════════════ INFO SHEET ════════════════════════════════ */
 

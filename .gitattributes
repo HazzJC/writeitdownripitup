@@ -1,0 +1,9 @@
+# Git's autocrlf is on for this checkout, and a stray line-ending conversion
+# would silently corrupt a binary asset. Auto-detection normally catches these;
+# being explicit costs nothing.
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff2 binary
+*.woff  binary
+*.exe   binary

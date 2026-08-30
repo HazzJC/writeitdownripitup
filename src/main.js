@@ -593,5 +593,20 @@ function registerServiceWorker() {
   });
 }
 
+/**
+ * Reveal the Windows download on the opening card.
+ *
+ * Only on http(s). The link goes to the GitHub releases page, so it would
+ * resolve anywhere, but in the desktop build and the single-file build the
+ * person reading it has already got the thing it is offering.
+ */
+function offerDesktopDownload() {
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
+  if (window.__TAURI__ || window.__TAURI_INTERNALS__) return;
+  const el = document.querySelector('.th-get');
+  if (el) el.hidden = false;
+}
+
 new Ritual();
 registerServiceWorker();
+offerDesktopDownload();
