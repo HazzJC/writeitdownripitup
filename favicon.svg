@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ritual">
+  <!--
+    The same flame device that is struck into the wax seal, so the tab icon and
+    the object you press to finish agree with each other. The dark ground is
+    deliberate: a bare flame disappears against a dark tab strip, and this is a
+    dark app.
+  -->
+  <defs>
+    <linearGradient id="flame" x1="32" y1="54" x2="32" y2="4" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c85a16"/>
+      <stop offset="0.42" stop-color="#ff9838"/>
+      <stop offset="0.78" stop-color="#ffc46c"/>
+      <stop offset="1" stop-color="#fff2cf"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="32" cy="34" r="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9838" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ff9838" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="13" fill="#0a0c11"/>
+  <circle cx="32" cy="34" r="26" fill="url(#glow)"/>
+
+  <path d="M32 4.7
+           C51.5 23.2 45 35.5 42.9 45.2
+           C40.8 54 23.2 54 21.1 45.2
+           C19 35.5 12.5 23.2 32 4.7 Z"
+        fill="url(#flame)"/>
+
+  <!-- The pale core, where the flame is hottest. -->
+  <path d="M32 20
+           C41 30 38 37 36.7 42.4
+           C35.5 47.4 28.5 47.4 27.3 42.4
+           C26 37 23 30 32 20 Z"
+        fill="#fff6de" opacity="0.85"/>
+</svg>

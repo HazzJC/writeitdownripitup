@@ -27,6 +27,7 @@ import { Seal } from './ui/seal.js';
 import { SealArt } from './ui/seal-art.js';
 import { InfoPanel, Meter } from './ui/panels.js';
 import { Haptics } from './ui/haptics.js';
+import { installDebug } from './ui/debug.js';
 import { Soundscape } from './audio/index.js';
 
 import { clamp01, glide, smoothstep } from './core/util.js';
@@ -139,7 +140,11 @@ class Ritual {
 
     // Exposed for the debug console.
     window.ritual = this;
+    // Both null unless the debug panel (ctrl+alt+d) has taken control.
     this.debugIntensity = null;
+    this.debugPresence = null;
+    this.viewportWasEmpty = false;
+    this.debug = installDebug(this);
   }
 
   /* ────────────────────────────────────────────────────── lifecycle ────── */
@@ -460,6 +465,24 @@ class Ritual {
   /* ─────────────────────────────────────────────────────────── loop ────── */
 
   loop(now) {
+    // Re-armed first rather than last. The loop is the only thing keeping the
+    // scene alive, so a single bad frame must not be able to freeze it for the
+    // rest of the session.
+    requestAnimationFrame(this.loop);
+
+    // A hidden tab, a minimised window or a collapsed pane reports a 0x0
+    // viewport. There is nothing to draw, and the renderers all divide by the
+    // width somewhere — laid out against zero, the candle and the ink jar end
+    // up at the same point and the shading term goes 0/0. So sit the frame
+    // out, and lay the scene out again when the window comes back, because
+    // everything built while hidden was built against nothing.
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (vw === 0 || vh === 0) { this.viewportWasEmpty = true; return; }
+    if (this.viewportWasEmpty) {
+      this.viewportWasEmpty = false;
+      this.resize();
+    }
+
     const tNow = now / 1000;
     let dt = tNow - this.last;
     this.last = tNow;
@@ -479,7 +502,9 @@ class Ritual {
     const writingFor = this.intensity.startedAt === null ? 0 : this.intensity.elapsed;
     const presenceTarget = smoothstep(writingFor / 150);
     // Glides slowly, and never falls back — weather does not un-happen.
-    this.presence = Math.max(this.presence, glide(this.presence, presenceTarget, 6, dt));
+    this.presence = this.debugPresence !== null
+      ? this.debugPresence
+      : Math.max(this.presence, glide(this.presence, presenceTarget, 6, dt));
 
     this.seal.update(dt);
     // The seal is lit by the same flame as everything else, and the light comes
@@ -525,6 +550,8 @@ class Ritual {
     // ---- audio ---------------------------------------------------------
     this.sound.update(v, dt, this.presence);
 
+    this.debug.update(dt);
+
     // ---- the hand deteriorates as the storm rises ---------------------
     if (this.phase === PHASE.WRITING || this.phase === PHASE.CRESCENDO) {
       this.paper.setAgitation(v * 0.8);
@@ -542,9 +569,29 @@ class Ritual {
       if (this.writingGlowTimer <= 0) $('#page').classList.remove('writing');
     }
     this.meter.update(dt, this.intensity);
-
-    requestAnimationFrame(this.loop);
   }
 }
 
+/**
+ * Offline support, on the website only.
+ *
+ * Registering is skipped for `file://` (the single-file build) and for Tauri
+ * (the desktop build), because both already have every asset locally and a
+ * service worker there would be a cache with nothing to cache and a version to
+ * keep in step for no reason.
+ */
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
+  if (window.__TAURI__ || window.__TAURI_INTERNALS__) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      // Offline capability is a bonus; failing to get it must never stop the
+      // app from running.
+      console.warn('offline support unavailable:', err && err.message);
+    });
+  });
+}
+
 new Ritual();
+registerServiceWorker();

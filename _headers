@@ -1,0 +1,32 @@
+# Cloudflare Pages reads this without a build step.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()
+  X-Frame-Options: SAMEORIGIN
+
+# Font filenames are content-hashed by the Google Fonts pipeline they came from
+# (caveat-fYB2Q7ZjYY.woff2), so a new file always means a new name and these can
+# be cached forever.
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Textures are NOT hashed, so they get a day and then a revalidation. Long
+# enough to help a return visit, short enough that replacing one is not a
+# permanent problem.
+/assets/textures/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Deliberately nothing for /src/* and /styles/*. Those filenames are not
+# hashed either, and pinning a long max-age on them would leave returning
+# visitors running old code with no way to tell them otherwise. Pages' default
+# ETag revalidation is the right behaviour there.
+#
+# There is also deliberately no Content-Security-Policy. The handwriting engine
+# writes a per-glyph inline style attribute for every character it renders
+# (src/write/paper.js, renderLine), so any style-src without 'unsafe-inline'
+# silently removes the jitter from every letter — the app would still work and
+# would simply stop looking handwritten, which is the worst kind of bug. With
+# no third-party content and all user text escaped through escapeHtml, a CSP
+# buys very little here.

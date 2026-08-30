@@ -1,0 +1,21 @@
+{
+  "name": "ritual",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Write it down. Let it go. A writing ritual where the weather answers what you write.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build:sw": "node tools/build-sw.mjs",
+    "build:single": "node tools/build-single.mjs",
+    "tauri": "tauri",
+    "build:dist": "node tools/build-dist.mjs",
+    "build:icons": "node tools/build-icons.mjs",
+    "build:desktop": "npm run build:dist && tauri build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "sharp": "^0.35.4",
+    "@tauri-apps/cli": "^2"
+  }
+}

@@ -99,7 +99,11 @@ export class PropsRenderer {
     // Inverse-square would be physically right but leaves the far side of the
     // room pitch black. A softer falloff plus a bounce term stands in for the
     // light the walls throw back.
-    const falloff = 1 / (1 + Math.pow(dist / (this.w * 0.42), 1.8));
+    // Guarded: with no viewport the width is zero and a prop can share the
+    // candle's position exactly, which makes this 0/0 and poisons the whole
+    // scene with NaN.
+    const reach = this.w * 0.42;
+    const falloff = reach > 0 ? 1 / (1 + Math.pow(dist / reach, 1.8)) : 0;
     // A face pointing at the flame catches much more of it.
     const toward = dist > 1 ? clamp01(((dx / dist) * facing + 1) * 0.5) : 0.5;
     const direct = falloff * lerp(0.42, 1.3, toward) * L.candle.value;

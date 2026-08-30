@@ -319,20 +319,38 @@
      wash of colour next to a textured surface, which reads as a sticker stuck
      on the corner rather than as the sheet itself. */
   background-color: var(--stock-tint, #e6d8b6);
+
+  /* Plain-colour fallback first. Everything below leans on color-mix(), and an
+     unsupported function invalidates the whole declaration rather than just
+     that one stop — so without this the fold loses its shading entirely on an
+     older browser instead of degrading. The ink has the same guard. */
   background-image:
     linear-gradient(315deg,
-      color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #fdf3dd) 0%,
-      color-mix(in srgb, var(--stock-tint, #e6d8b6) 94%, #e8d8b4) 22%,
-      color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #a8916a) 48%,
-      color-mix(in srgb, var(--stock-tint, #e6d8b6) 62%, #6a5738) 60%,
-      color-mix(in srgb, var(--stock-tint, #e6d8b6) 48%, #43361f) 63%),
-    var(--stock-image, none);
-  background-size: auto, 340% auto;
-  background-position: 0 0, 62% 74%;
-  background-blend-mode: multiply, multiply;
-  /* The fold runs corner to corner. */
+      rgba(255, 246, 226, .55) 0%,
+      rgba(220, 202, 164, .5) 34%,
+      rgba(120, 100, 66, .55) 58%,
+      rgba(60, 48, 28, .6) 63%);
+
+  /* The fold runs corner to corner. Shape and lighting stay out here — they
+     must apply whether or not the colour mixing below is supported. */
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
   filter: brightness(calc(.48 + var(--candle) * .40 + var(--flash) * .4)) saturate(1.04);
+}
+
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  #page-sheet .curl {
+    background-image:
+      linear-gradient(315deg,
+        color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #fdf3dd) 0%,
+        color-mix(in srgb, var(--stock-tint, #e6d8b6) 94%, #e8d8b4) 22%,
+        color-mix(in srgb, var(--stock-tint, #e6d8b6) 84%, #a8916a) 48%,
+        color-mix(in srgb, var(--stock-tint, #e6d8b6) 62%, #6a5738) 60%,
+        color-mix(in srgb, var(--stock-tint, #e6d8b6) 48%, #43361f) 63%),
+      var(--stock-image, none);
+    background-size: auto, 340% auto;
+    background-position: 0 0, 62% 74%;
+    background-blend-mode: multiply, multiply;
+  }
 }
 
 /* The shadow the lifted corner drops onto the sheet under it. */

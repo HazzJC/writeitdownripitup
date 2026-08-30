@@ -51,6 +51,7 @@ export class Soundscape {
     this.rain.update(intensity, dt, presence);
     this.wind.update(intensity, dt);
     this.music.update(intensity, dt);
+    this.writing.update();
   }
 
   /** @param {number} distance 0 = overhead crack, 1 = distant rumble */

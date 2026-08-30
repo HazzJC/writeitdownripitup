@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Ritual asks the host for nothing: no filesystem, no network, no shell, no dialogs. Everything it needs is inside the bundle, and it writes nothing anywhere. Keeping this list at the bare default is what keeps both the binary and the attack surface small.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

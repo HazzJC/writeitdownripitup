@@ -17,7 +17,7 @@
  * where the sky hits it.
  */
 
-import { clamp01, lerp, rand, randInt } from '../core/util.js';
+import { clamp, clamp01, lerp, rand, randInt } from '../core/util.js';
 
 const SPRITE_STEPS = 12;   // sprite LODs across the size range
 const SPRITE_MAX = 96;     // px of the largest sprite
@@ -129,7 +129,9 @@ export class GlassRenderer {
   spawnBead(x, y, r) {
     if (this.beads.length >= this.maxBeads) return null;
     const b = {
-      x: x !== undefined ? x : Math.random() * this.w,
+      // Clamped here rather than at every call site, so no drop can ever
+      // sit off the edge of the pane no matter who asked for it.
+      x: clamp(x !== undefined ? x : Math.random() * this.w, 1, Math.max(1, this.w - 1)),
       y: y !== undefined ? y : Math.random() * this.h,
       r: r !== undefined ? r : rand(1.2, 3.6),
       // A drop's own threshold varies - glass is not uniformly clean.
@@ -149,7 +151,12 @@ export class GlassRenderer {
       vy: rand(12, 40),
       vx: 0,
       // Where the drop wanders as it descends - glass has micro-channels.
-      drift: rand(-0.5, 0.5),
+      // The sine alone averages to zero, which sends every runner straight
+      // down and leaves the pane looking ruled. The bias below is the constant
+      // sideways component that actually makes paths diverge and cross.
+      drift: rand(-1, 1),
+      bias: rand(-1, 1) * 9,
+      wobFreq: rand(1.3, 3.6),
       driftPhase: Math.random() * 6.283,
       lastTrail: b.y,
     });
@@ -203,12 +210,18 @@ export class GlassRenderer {
       const rn = this.runners[i];
       // Gravity, scaled by mass: fat drops fall much faster.
       rn.vy += dt * (140 + rn.r * 46) * lerp(0.7, 1.35, s);
-      rn.driftPhase += dt * 2.2;
-      rn.vx = rn.drift * 26 * Math.sin(rn.driftPhase) + rn.vy * shear;
+      rn.driftPhase += dt * rn.wobFreq;
+      rn.vx = rn.bias + rn.drift * 30 * Math.sin(rn.driftPhase) + rn.vy * shear;
 
       const py = rn.y;
       rn.y += rn.vy * dt;
       rn.x += rn.vx * dt;
+
+      // Stay on the pane. A drop that reaches the frame runs down beside it
+      // rather than sliding out of the window, so steer the bias inward.
+      const edge = rn.r + 1;
+      if (rn.x < edge) { rn.x = edge; rn.bias = Math.abs(rn.bias); }
+      else if (rn.x > w - edge) { rn.x = w - edge; rn.bias = -Math.abs(rn.bias); }
 
       // Eat beads it passes through, growing as it goes.
       for (let j = this.beads.length - 1; j >= 0; j--) {
@@ -260,7 +273,11 @@ export class GlassRenderer {
     if (rn.y - rn.lastTrail > rand(6, 22)) {
       rn.lastTrail = rn.y;
       if (this.beads.length < this.maxBeads && rn.r > 2) {
-        this.spawnBead(rn.x + rand(-1.5, 1.5), rn.y - rand(2, 8), rn.r * rand(0.14, 0.34));
+        // Scattered across the width of the wet channel, not stacked down
+        // its centre line - that is what read as a row of dots.
+        const spread = 2 + rn.r * 1.3;
+        this.spawnBead(rn.x + rand(-spread, spread), rn.y - rand(2, 10),
+          rn.r * rand(0.14, 0.34));
       }
     }
   }
