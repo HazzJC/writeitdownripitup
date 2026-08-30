@@ -38,6 +38,8 @@ export class SkyRenderer {
 
     this.intensity = 0;
     this.presence = 0;
+    this.sway = 0;
+    this.windPhase = Math.random() * 100;
     this.t = 0;
     this.resize();
   }
@@ -131,7 +133,10 @@ export class SkyRenderer {
       // falling on it actually changes — see the draw loop.
       const tinted = document.createElement('canvas');
       tinted.width = w; tinted.height = h;
-      return { cv, g, depth, tinted, tctx: tinted.getContext('2d'), lastKey: '' };
+      // How far this layer bends. The foreground tree moves most; the far
+      // ridge is too distant for its movement to read at all.
+      const swayAmount = depth < 0.15 ? 1 : depth < 0.4 ? 0.45 : depth < 0.7 ? 0.12 : 0;
+      return { cv, g, depth, tinted, tctx: tinted.getContext('2d'), lastKey: '', swayAmount };
     };
 
     const ridge = (g, baseY, amp, freq, phase, rough = 1) => {
@@ -282,67 +287,204 @@ export class SkyRenderer {
   }
 
   /**
-   * The cottage across the field.
+   * The cottage across the field — geometry only.
    *
-   * Two identical lit rectangles at the same height read unmistakably as a
-   * pair of eyes. So: openings of different sizes at different heights, an
-   * open door throwing light down toward the path, a chimney with smoke
-   * leaning off it, and an off-centre ridge. Asymmetry everywhere.
+   * The silhouette goes into the mid layer so it occludes the hill behind it,
+   * but nothing is punched out of it. The building is *drawn lit* in the draw
+   * pass instead (see `drawCottage`), because a hole in a silhouette gives you
+   * a lit rectangle floating in the dark with no building around it — which is
+   * exactly what it looked like. A wall you can see, with light spilling down
+   * it from its own windows, is what makes the windows read as windows.
    */
   buildCottage(g, w, h, rng) {
     // Right of centre: the page sits over the middle of the window for the
     // whole session, and a cottage nobody can see is wasted detail.
     const cx = w * 0.795;
-    const cy = h * 0.735;
-    const cw = w * 0.135, ch = h * 0.165;
+    const cy = h * 0.715;
+    const cw = w * 0.155, ch = h * 0.195;
 
-    g.beginPath();
-    g.moveTo(cx - cw / 2, cy + ch);
-    g.lineTo(cx - cw / 2, cy + ch * 0.36);
-    g.lineTo(cx - cw * 0.6, cy + ch * 0.36);
-    g.lineTo(cx - cw * 0.08, cy - ch * 0.26);      // ridge, off-centre
-    g.lineTo(cx + cw * 0.62, cy + ch * 0.36);
-    g.lineTo(cx + cw / 2, cy + ch * 0.36);
-    g.lineTo(cx + cw / 2, cy + ch);
-    g.closePath();
-    g.fill();
+    const body = (ctx) => {
+      ctx.beginPath();
+      ctx.moveTo(cx - cw / 2, cy + ch);
+      ctx.lineTo(cx - cw / 2, cy + ch * 0.36);
+      ctx.lineTo(cx - cw * 0.6, cy + ch * 0.36);
+      ctx.lineTo(cx - cw * 0.08, cy - ch * 0.26);      // ridge, off-centre
+      ctx.lineTo(cx + cw * 0.62, cy + ch * 0.36);
+      ctx.lineTo(cx + cw / 2, cy + ch * 0.36);
+      ctx.lineTo(cx + cw / 2, cy + ch);
+      ctx.closePath();
+    };
+    const lean = (ctx) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + cw * 0.5, cy + ch);
+      ctx.lineTo(cx + cw * 0.5, cy + ch * 0.58);
+      ctx.lineTo(cx + cw * 0.92, cy + ch * 0.72);
+      ctx.lineTo(cx + cw * 0.92, cy + ch);
+      ctx.closePath();
+    };
 
-    // A lean-to on the near end, so the outline is not symmetrical.
-    g.beginPath();
-    g.moveTo(cx + cw * 0.5, cy + ch);
-    g.lineTo(cx + cw * 0.5, cy + ch * 0.6);
-    g.lineTo(cx + cw * 0.86, cy + ch * 0.72);
-    g.lineTo(cx + cw * 0.86, cy + ch);
-    g.closePath();
-    g.fill();
+    body(g); g.fill();
+    lean(g); g.fill();
+    g.fillRect(cx - cw * 0.34, cy - ch * 0.2, cw * 0.09, ch * 0.4);   // chimney
 
-    // Chimney, with a little smoke leaning off it.
-    g.fillRect(cx - cw * 0.34, cy - ch * 0.2, cw * 0.1, ch * 0.42);
-    g.lineWidth = Math.max(1, w * 0.0018);
+    // Smoke, leaning downwind.
+    g.lineWidth = Math.max(1, w * 0.0016);
     g.beginPath();
-    g.moveTo(cx - cw * 0.29, cy - ch * 0.22);
-    g.quadraticCurveTo(cx - cw * 0.1, cy - ch * 0.55, cx + cw * 0.25, cy - ch * 0.7);
+    g.moveTo(cx - cw * 0.3, cy - ch * 0.22);
+    g.quadraticCurveTo(cx - cw * 0.08, cy - ch * 0.52, cx + cw * 0.28, cy - ch * 0.66);
     g.stroke();
 
-    // Punch the openings out so warm light can come through them.
-    g.globalCompositeOperation = 'destination-out';
-    this.windows = [];
-    const openings = [
-      // [x frac, y frac, w frac, h frac, warmth]
-      [-0.33, 0.54, 0.20, 0.20, 1.0],    // big downstairs window
-      [0.10, 0.60, 0.11, 0.13, 0.62],    // a smaller one, lower and to the right
-      [-0.14, 0.10, 0.09, 0.11, 0.34],   // gable light under the ridge, dim
-      [0.60, 0.74, 0.08, 0.24, 0.85],    // the open door in the lean-to
-    ];
-    for (const [fx, fy, fw, fh, warm] of openings) {
-      const wx = cx + cw * fx, wy = cy + ch * fy;
-      const ww = cw * fw, wh = ch * fh;
-      g.fillRect(wx, wy, ww, wh);
-      this.windows.push({ x: wx, y: wy, w: ww, h: wh, warm });
-    }
-    g.globalCompositeOperation = 'source-over';
+    this.cottage = { x: cx, y: cy, w: cw, h: ch, body, lean };
 
-    this.cottage = { x: cx, y: cy, w: cw, h: ch };
+    // Openings, in the same coordinate space. Different sizes at different
+    // heights: two identical rectangles side by side read as a pair of eyes.
+    this.windows = [
+      // [x frac, y frac, w frac, h frac, warmth, bars]
+      [-0.30, 0.50, 0.20, 0.19, 1.00, true],   // big downstairs window
+      [0.13, 0.56, 0.11, 0.13, 0.62, true],    // smaller, lower, to the right
+      [-0.13, 0.02, 0.085, 0.10, 0.34, false], // gable light under the ridge
+      [0.66, 0.70, 0.075, 0.25, 0.85, false],  // the open door in the lean-to
+    ].map(([fx, fy, fw, fh, warm, bars]) => ({
+      x: cx + cw * fx, y: cy + ch * fy,
+      w: cw * fw, h: ch * fh, warm, bars,
+    }));
+  }
+
+  /**
+   * The cottage, lit.
+   *
+   * Drawn after its layer so the walls can be brighter than the silhouette,
+   * and so the light coming out of the windows can fall on the wall around
+   * them. That spill is the whole trick: without it the openings are just
+   * bright rectangles, and with it there is obviously a building there.
+   */
+  drawCottage(g, flash) {
+    const c = this.cottage;
+    if (!c) return;
+    const L = this.lighting;
+    const hz = this.horizon || [24, 30, 46];
+    const flick = 0.8 + Math.sin(this.t * 1.7) * 0.05 + Math.sin(this.t * 4.3) * 0.03;
+    const warm = flick * lerp(1, 0.4, flash);
+
+    const rgb = (k, wr, wg, wb) => 'rgb(' +
+      Math.min(255, hz[0] * k + wr).toFixed(0) + ',' +
+      Math.min(255, hz[1] * k + wg).toFixed(0) + ',' +
+      Math.min(255, hz[2] * k + wb).toFixed(0) + ')';
+
+    g.save();
+
+    // The building sits *on* the field, so there is dark under it.
+    const base = g.createLinearGradient(0, c.y + c.h * 0.86, 0, c.y + c.h * 1.28);
+    base.addColorStop(0, 'rgba(0,0,0,0)');
+    base.addColorStop(0.5, 'rgba(6, 5, 4, 0.5)');
+    base.addColorStop(1, 'rgba(6, 5, 4, 0)');
+    g.fillStyle = base;
+    g.fillRect(c.x - c.w * 0.9, c.y + c.h * 0.86, c.w * 2, c.h * 0.42);
+
+    // --- walls -----------------------------------------------------------
+    // Lighter than the hill behind, and warmed from within by its own lamps.
+    g.save();
+    c.body(g);
+    g.clip();
+    const wall = g.createLinearGradient(c.x - c.w / 2, 0, c.x + c.w / 2, 0);
+    wall.addColorStop(0, rgb(0.62, 6 * warm, 3 * warm, 0));
+    wall.addColorStop(0.45, rgb(1.05, 26 * warm, 15 * warm, 2));
+    wall.addColorStop(1, rgb(0.7, 9 * warm, 4 * warm, 0));
+    g.fillStyle = wall;
+    g.fillRect(c.x - c.w, c.y - c.h, c.w * 2, c.h * 2.2);
+    g.restore();
+
+    // --- roof ------------------------------------------------------------
+    // Slate faces the sky, so it is the lightest part of the building on a
+    // night like this — and it is cold where the walls are warm.
+    g.save();
+    g.beginPath();
+    g.moveTo(c.x - c.w * 0.6, c.y + c.h * 0.36);
+    g.lineTo(c.x - c.w * 0.08, c.y - c.h * 0.26);
+    g.lineTo(c.x + c.w * 0.62, c.y + c.h * 0.36);
+    g.closePath();
+    g.clip();
+    const roof = g.createLinearGradient(0, c.y - c.h * 0.26, 0, c.y + c.h * 0.36);
+    roof.addColorStop(0, rgb(2.35 + flash * 3.4, 0, 2, 14));
+    roof.addColorStop(1, rgb(1.45 + flash * 1.8, 0, 0, 6));
+    g.fillStyle = roof;
+    g.fillRect(c.x - c.w, c.y - c.h, c.w * 2, c.h * 2);
+    // Courses of slate.
+    g.globalAlpha = 0.3;
+    g.strokeStyle = rgb(0.75, 0, 0, 0);
+    g.lineWidth = Math.max(0.6, c.h * 0.012);
+    for (let i = 1; i < 6; i++) {
+      const y = c.y - c.h * 0.26 + (c.h * 0.62 * i) / 6;
+      g.beginPath(); g.moveTo(c.x - c.w, y); g.lineTo(c.x + c.w, y); g.stroke();
+    }
+    g.restore();
+
+    // The eaves overhang, so there is a hard shadow line under them. Without
+    // it the roof and the wall read as one flat shape.
+    g.fillStyle = 'rgba(6, 5, 4, 0.5)';
+    g.fillRect(c.x - c.w * 0.6, c.y + c.h * 0.34, c.w * 1.22, Math.max(1, c.h * 0.035));
+
+    // --- the lean-to -----------------------------------------------------
+    g.save();
+    c.lean(g);
+    g.clip();
+    g.fillStyle = rgb(0.62, 8 * warm, 4 * warm, 0);
+    g.fillRect(c.x, c.y, c.w * 1.2, c.h * 1.2);
+    g.restore();
+
+    // --- windows ---------------------------------------------------------
+    for (const win of this.windows) {
+      const wm = win.warm * warm;
+      const cxw = win.x + win.w / 2, cyw = win.y + win.h / 2;
+
+      // Light on the wall around the opening. This is what makes it a window
+      // in a building rather than a lit rectangle in the dark.
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      const spill = g.createRadialGradient(cxw, cyw, 0, cxw, cyw, Math.max(win.w, win.h) * 3.4);
+      spill.addColorStop(0, `rgba(255, 176, 88, ${0.34 * wm})`);
+      spill.addColorStop(0.3, `rgba(236, 142, 54, ${0.13 * wm})`);
+      spill.addColorStop(1, 'rgba(190, 100, 34, 0)');
+      g.fillStyle = spill;
+      const r = Math.max(win.w, win.h) * 3.4;
+      g.fillRect(cxw - r, cyw - r, r * 2, r * 2);
+      g.restore();
+
+      // A recess: the reveal is in shadow on one side.
+      g.fillStyle = 'rgba(10, 8, 6, 0.55)';
+      g.fillRect(win.x - win.w * 0.08, win.y - win.h * 0.08,
+        win.w * 1.16, win.h * 1.16);
+
+      // The pane.
+      const pane = g.createLinearGradient(0, win.y, 0, win.y + win.h);
+      pane.addColorStop(0, `rgba(255, 214, 150, ${0.95 * wm})`);
+      pane.addColorStop(1, `rgba(248, 176, 96, ${0.8 * wm})`);
+      g.fillStyle = pane;
+      g.fillRect(win.x, win.y, win.w, win.h);
+
+      // Glazing bars, and a cill under it.
+      if (win.bars && win.w > 5) {
+        g.fillStyle = `rgba(38, 24, 12, ${0.62 * wm})`;
+        g.fillRect(win.x + win.w * 0.47, win.y, Math.max(0.8, win.w * 0.06), win.h);
+        g.fillRect(win.x, win.y + win.h * 0.44, win.w, Math.max(0.8, win.h * 0.08));
+      }
+      g.fillStyle = rgb(1.1, 5 * wm, 3 * wm, 2);
+      g.fillRect(win.x - win.w * 0.12, win.y + win.h * 1.06,
+        win.w * 1.24, Math.max(1, win.h * 0.1));
+
+      // And light thrown down onto the ground below.
+      g.save();
+      g.globalCompositeOperation = 'lighter';
+      const floorLit = g.createRadialGradient(cxw, win.y + win.h * 2.6, 0,
+        cxw, win.y + win.h * 2.6, win.w * 2.4);
+      floorLit.addColorStop(0, `rgba(226, 146, 60, ${0.14 * wm})`);
+      floorLit.addColorStop(1, 'rgba(190, 100, 34, 0)');
+      g.fillStyle = floorLit;
+      g.fillRect(cxw - win.w * 2.4, win.y, win.w * 4.8, win.h * 4);
+      g.restore();
+    }
+
+    g.restore();
   }
 
   // ------------------------------------------------------------------ rain
@@ -428,6 +570,13 @@ export class SkyRenderer {
     this.intensity = clamp01(intensity);
     this.presence = clamp01(presence);
     const s = this.intensity;
+
+    // The wind that bends the trees. Two incommensurate rates plus a slow gust
+    // envelope, so it never settles into a visible loop.
+    this.windPhase += dt * lerp(0.35, 1.5, s);
+    const gust = 0.55 + 0.45 * Math.sin(this.windPhase * 0.23) * Math.sin(this.windPhase * 0.61);
+    this.sway = (Math.sin(this.windPhase) * 0.7 + Math.sin(this.windPhase * 2.37 + 1.1) * 0.3)
+      * gust * lerp(2, 38, Math.pow(s, 1.2));
 
     this.cloudOffset = (this.cloudOffset + dt * lerp(4, 34, s)) % 768;
     this.cloudOffset2 = (this.cloudOffset2 + dt * lerp(2, 19, s)) % 768;
@@ -594,7 +743,24 @@ export class SkyRenderer {
           tc.drawImage(L2.cv, 0, 0, w, h);
           tc.globalCompositeOperation = 'source-over';
         }
-        g.drawImage(L2.tinted, 0, 0, w, h);
+        // Trees do not stand still in a gale. The layer is a cached bitmap, so
+        // the bend is a horizontal skew: full displacement at the top of the
+        // frame, none at the bottom, which pivots the trunks about their roots
+        // instead of sliding the whole picture sideways.
+        //
+        // Drawing it as a stack of shifted horizontal bands gives a truer
+        // curved flex, but it costs a drawImage per band per layer per frame
+        // and roughly doubled the frame budget. At this distance the difference
+        // between a linear lean and a curved one is not visible; the cost is.
+        const sway = this.sway * L2.swayAmount;
+        if (Math.abs(sway) < 0.3) {
+          g.drawImage(L2.tinted, 0, 0, w, h);
+        } else {
+          g.save();
+          g.transform(1, 0, -sway / h, 1, sway, 0);
+          g.drawImage(L2.tinted, 0, 0, w, h);
+          g.restore();
+        }
 
         // Rain hangs in the air between the layers, so each one is veiled a
         // little by the depth in front of it. This is what actually reads as
@@ -612,40 +778,7 @@ export class SkyRenderer {
         }
       }
 
-      // Warm light from the neighbour's windows and the open door.
-      if (this.windows) {
-        g.save();
-        g.globalCompositeOperation = 'lighter';
-        // Their lamps gutter a little too, and wash out when lightning wins.
-        const flick = 0.78 + Math.sin(this.t * 1.7) * 0.04 + Math.sin(this.t * 4.3) * 0.02;
-        const warm = flick * lerp(1, 0.4, flash);
-        for (const win of this.windows) {
-          const cxw = win.x + win.w / 2, cyw = win.y + win.h / 2;
-          const wm = (win.warm === undefined ? 1 : win.warm) * warm;
-          const r = Math.max(win.w, win.h) * 3.6;
-          const gr = g.createRadialGradient(cxw, cyw, 0, cxw, cyw, r);
-          gr.addColorStop(0, `rgba(255, 182, 92, ${0.62 * wm})`);
-          gr.addColorStop(0.22, `rgba(240, 146, 56, ${0.22 * wm})`);
-          gr.addColorStop(1, 'rgba(200, 106, 36, 0)');
-          g.fillStyle = gr;
-          g.fillRect(cxw - r, cyw - r, r * 2, r * 2);
-          // The pane itself, and a suggestion of a glazing bar across it.
-          g.fillStyle = `rgba(255, 206, 138, ${0.85 * wm})`;
-          g.fillRect(win.x, win.y, win.w, win.h);
-          if (win.w > 4 && win.h > 4) {
-            g.fillStyle = `rgba(40, 24, 10, ${0.5 * wm})`;
-            g.fillRect(win.x + win.w * 0.46, win.y, Math.max(0.7, win.w * 0.07), win.h);
-          }
-          // Light spilling onto the ground below the opening.
-          const sg = g.createRadialGradient(cxw, win.y + win.h * 1.9, 0,
-            cxw, win.y + win.h * 1.9, win.w * 2.6);
-          sg.addColorStop(0, `rgba(230, 150, 62, ${0.16 * wm})`);
-          sg.addColorStop(1, 'rgba(200, 110, 40, 0)');
-          g.fillStyle = sg;
-          g.fillRect(cxw - win.w * 2.6, win.y, win.w * 5.2, win.h * 4);
-        }
-        g.restore();
-      }
+      this.drawCottage(g, flash);
     }
 
     // --- falling rain ----------------------------------------------------

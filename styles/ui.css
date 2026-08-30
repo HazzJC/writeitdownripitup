@@ -34,6 +34,12 @@
   z-index: 4;
 }
 
+/* Only the button itself is a click target. Its decoration must not be, or an
+   object that overlaps its neighbour — a shadow cast across the pad below it in
+   a stack, say — swallows clicks meant for that neighbour. */
+.obj > span,
+.obj > canvas { pointer-events: none; }
+
 /* A hand-written label that fades in on hover, like a museum card. */
 .obj .cap {
   position: absolute;
@@ -275,43 +281,145 @@
 
 /* ══════════════════════════════ PAPER STOCK ═══════════════════════════════ */
 
+/* The pile you take a sheet from. Each entry is the object that paper comes
+   out of — a bundle of loose sheets, a block of writing paper, a bound
+   notebook, a ledger — stacked on the desk the way they would actually be
+   left. Choosing one slides it out of the pile.
+
+   This replaced both a fan of paper strips *and* a canvas-drawn stack of books
+   that shared the same corner, which is why the old selector looked like it
+   was floating on top of the furniture. */
+
 #stock {
-  left: 1.5vw;
-  bottom: calc(2.5vh + min(13vh, 11vw) + clamp(32px, 3.2vw, 54px) + 6vh);
+  left: 2vw;
+  bottom: calc(2.5vh + min(13vh, 11vw) + clamp(32px, 3.2vw, 54px) + 5.5vh);
   flex-direction: column-reverse;
   align-items: flex-start;
   gap: 0;
 }
 
-.sheet {
-  width: clamp(58px, 6.4vw, 108px);
-  height: clamp(9px, 1.05vw, 17px);
-  margin-top: calc(-1 * clamp(3px, .35vw, 6px));
-  transform-origin: 12% 50%;
+.pad {
+  width: clamp(96px, 10.5vw, 168px);
+  height: clamp(15px, 1.65vw, 26px);
+  margin-top: calc(-1 * clamp(4px, .45vw, 8px));
+  transform-origin: 8% 50%;
 }
-.sheet .edge {
+.pad:hover, .pad:focus-visible { transform: translateX(7%) rotate(-1.1deg); }
+.pad[aria-checked="true"] { transform: translateX(15%) rotate(-2deg); }
+
+.pad .pad-shadow {
+  position: absolute;
+  left: 2%; right: -3%;
+  bottom: -22%;
+  height: 76%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .5);
+  filter: blur(5px);
+  z-index: -1;
+}
+
+.pad .pad-body {
   position: absolute;
   inset: 0;
-  border-radius: 1px 3px 2px 1px;
+  border-radius: 2px;
   background: var(--sheet-tint, #e6d8b6);
   box-shadow:
-    0 2px 4px rgba(0,0,0,.6),
-    inset 0 1px 0 rgba(255,255,255,.35),
-    inset 0 -2px 3px rgba(110,86,48,.4);
-  /* Torn edges, so a stack of sheets doesn't look like a stack of cards. */
-  clip-path: polygon(0% 12%, 22% 4%, 48% 14%, 72% 2%, 96% 12%, 100% 52%,
-                     94% 92%, 68% 100%, 42% 90%, 16% 99%, 2% 84%);
+    inset 0 1px 0 rgba(255, 250, 236, .5),
+    inset 0 -2px 4px rgba(90, 70, 40, .38);
 }
-.sheet:hover, .sheet:focus-visible { transform: translateX(9%) rotate(-1.6deg); }
-.sheet[aria-checked="true"] { transform: translateX(16%) rotate(-2.6deg) scale(1.03); }
-.sheet[aria-checked="true"] .edge {
+
+/* The block of pages, seen edge on. */
+.pad .pad-edge {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 46%;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(120, 98, 62, .16) 0 1px,
+      rgba(0,0,0,0) 1px 3px);
+  opacity: .8;
+}
+
+.pad .pad-mark { position: absolute; inset: 0; pointer-events: none; }
+
+/* ── parchment: a loose bundle, torn edges, no binding ─────────────────── */
+.pad-parchment .pad-body {
+  background: linear-gradient(180deg, #e8d8b0 0%, #d9c69a 55%, #c2ac7e 100%);
+  clip-path: polygon(0% 14%, 19% 4%, 44% 13%, 68% 2%, 92% 11%, 100% 46%,
+                     96% 86%, 71% 100%, 46% 88%, 20% 99%, 3% 82%);
+  border-radius: 0;
+}
+.pad-parchment .pad-edge { opacity: .4; }
+
+/* ── letter paper: a square-cut block with a paper band round it ───────── */
+.pad-letter .pad-body {
+  background: linear-gradient(180deg, #f3efe3 0%, #e6e0d0 52%, #cdc6b2 100%);
+}
+.pad-letter .pad-mark {
+  background: linear-gradient(90deg,
+    rgba(0,0,0,0) 22%,
+    rgba(168, 142, 96, .5) 22.5%, rgba(196, 172, 126, .62) 25%,
+    rgba(168, 142, 96, .5) 27.5%, rgba(0,0,0,0) 28%);
+}
+
+/* ── notebook: a cloth-bound cover with a spine and an elastic ─────────── */
+.pad-notebook .pad-body {
+  background: linear-gradient(180deg, #3f5240 0%, #334434 46%, #202b21 100%);
   box-shadow:
-    0 3px 8px rgba(0,0,0,.7),
-    inset 0 1px 0 rgba(255,255,255,.55),
-    0 0 12px rgba(255, 186, 104, calc(.4 * var(--candle)));
+    inset 0 1px 0 rgba(140, 170, 140, .22),
+    inset 0 -2px 5px rgba(0, 0, 0, .5);
 }
-.sheet .cap { bottom: auto; top: 50%; left: calc(100% + 10px); transform: translateY(-50%) translateX(-4px); }
-.sheet:hover .cap, .sheet:focus-visible .cap { transform: translateY(-50%) translateX(0); }
+.pad-notebook .pad-edge {
+  height: 30%;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #ded6c2 8%, #c3baa4 100%);
+  opacity: 1;
+}
+.pad-notebook .pad-mark {
+  /* the spine, and the elastic across it */
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.45) 0 5%, rgba(0,0,0,0) 5.5%),
+    linear-gradient(90deg, rgba(0,0,0,0) 76%, rgba(24, 20, 16, .8) 77%,
+                    rgba(60, 52, 44, .8) 79%, rgba(0,0,0,0) 80%);
+}
+
+/* ── ledger: a taller hardback, marbled boards, red spine label ────────── */
+.pad-ledger { height: clamp(18px, 2vw, 31px); }
+.pad-ledger .pad-body {
+  background:
+    repeating-linear-gradient(114deg,
+      rgba(96, 62, 44, .3) 0 3px, rgba(0,0,0,0) 3px 7px),
+    linear-gradient(180deg, #6b4a30 0%, #55381f 50%, #3a2514 100%);
+}
+.pad-ledger .pad-edge {
+  height: 26%;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, #cfc0a0 10%, #a89578 100%);
+  opacity: 1;
+}
+.pad-ledger .pad-mark {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0) 8%, rgba(122, 30, 28, .9) 9%,
+                    rgba(150, 44, 40, .9) 22%, rgba(0,0,0,0) 23%),
+    linear-gradient(90deg, rgba(0,0,0,.4) 0 4%, rgba(0,0,0,0) 4.5%);
+}
+
+/* The generic "selected" brightness is tuned for small metal and glass. On a
+   sheet of pale paper it blows out to near white, so the pile gets its own. */
+.pad[aria-checked="true"] {
+  filter: brightness(calc(.44 + var(--candle) * .46 + var(--flash) * .4));
+}
+.pad:hover, .pad:focus-visible {
+  filter: brightness(calc(.42 + var(--candle) * .44 + var(--flash) * .4));
+}
+
+.pad[aria-checked="true"] .pad-body {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 250, 236, .55),
+    inset 0 -2px 4px rgba(90, 70, 40, .38),
+    0 0 14px rgba(255, 186, 104, calc(.45 * var(--candle)));
+}
+
+.pad .cap { bottom: auto; top: 50%; left: calc(100% + 12px); transform: translateY(-50%) translateX(-4px); }
+.pad:hover .cap, .pad:focus-visible .cap { transform: translateY(-50%) translateX(0); }
 
 /* ═════════════════════════════ SPECIMEN BOOK ══════════════════════════════ */
 
@@ -419,33 +527,16 @@
 }
 #seal:hover { transform: scale(1.06) translateY(-3px); }
 
-#seal .seal-wax {
+/* The wax itself is painted by src/ui/seal-art.js — see the note there for
+   why this is a canvas and not a stack of gradients. */
+#seal .seal-canvas {
   position: absolute;
-  inset: 6%;
-  border-radius: 48% 52% 46% 54% / 52% 46% 54% 48%;
-  background:
-    radial-gradient(38% 34% at 34% 28%, rgba(255,150,140,.55), rgba(0,0,0,0) 62%),
-    radial-gradient(80% 80% at 50% 60%, #8e1f22 0%, #6a1417 58%, #430c0f 100%);
-  box-shadow:
-    inset 0 -6px 12px rgba(0,0,0,.55),
-    inset 0 4px 10px rgba(255,120,100,.22),
-    0 10px 22px rgba(0,0,0,.7);
-  /* Wax spreads unevenly. */
-  clip-path: polygon(50% 0%, 71% 5%, 88% 18%, 97% 39%, 96% 62%, 84% 82%,
-                     64% 96%, 42% 99%, 22% 89%, 8% 71%, 2% 48%, 9% 25%, 27% 8%);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
-#seal .seal-sigil {
-  position: absolute;
-  inset: 26%;
-  /* A struck flame device, pressed into the wax. */
-  background:
-    radial-gradient(48% 60% at 50% 62%, rgba(0,0,0,.42) 0 46%, rgba(0,0,0,0) 60%),
-    conic-gradient(from 180deg at 50% 62%,
-      rgba(255,170,150,.30) 0deg 40deg, rgba(0,0,0,.30) 40deg 160deg,
-      rgba(255,170,150,.26) 160deg 220deg, rgba(0,0,0,.28) 220deg 360deg);
-  clip-path: polygon(50% 0%, 66% 26%, 62% 42%, 78% 62%, 70% 88%, 50% 100%, 30% 88%, 22% 62%, 38% 42%, 34% 26%);
-  opacity: .85;
-}
+
 #seal .seal-ring {
   position: absolute;
   inset: 0;
@@ -469,9 +560,7 @@
   opacity: calc(var(--hold, 0) * .95);
   pointer-events: none;
 }
-#seal.holding .seal-wax {
-  filter: brightness(calc(1 + var(--hold, 0) * .8)) saturate(calc(1 + var(--hold,0) * .5));
-}
+#seal.holding .seal-canvas { filter: brightness(calc(1 + var(--hold, 0) * .12)); }
 
 #seal .seal-hint {
   position: absolute;

@@ -24,6 +24,7 @@ import { installTextures } from './scene/textures.js';
 import { Paper } from './write/paper.js';
 import { DeskUI } from './ui/desk.js';
 import { Seal } from './ui/seal.js';
+import { SealArt } from './ui/seal-art.js';
 import { InfoPanel, Meter } from './ui/panels.js';
 import { Haptics } from './ui/haptics.js';
 import { Soundscape } from './audio/index.js';
@@ -82,6 +83,11 @@ class Ritual {
         this.sound.setInstrument(inst.voice);
       },
       onInk: (ink) => this.paper.setInk(ink),
+      onInkPickUp: (pitch) => {
+        this.sound.clink(pitch, 0.55);
+        this.lighting.disturb(0.18);
+        this.haptics.tick();
+      },
       onStock: (stock) => { this.paper.setStock(stock); this.syncRuling(); },
       onHand: (hand) => { this.paper.setHand(hand); this.syncRuling(); },
       onPickUp: (inst, what) => {
@@ -92,6 +98,7 @@ class Ritual {
       },
     });
 
+    this.sealArt = new SealArt($('#seal .seal-canvas'));
     this.seal = new Seal($('#seal'), {
       onCrescendo: () => this.beginCrescendo(),
       onCancel: () => this.cancelCrescendo(),
@@ -196,6 +203,7 @@ class Ritual {
     this.candle.resize();
     this.atmos.resize();
     this.props.resize();
+    this.sealArt.resize();
     this.syncRuling();
     if (this.burn.active) this.burn.prepare(this.burn.ignition.x, this.burn.ignition.y);
   }
@@ -474,6 +482,13 @@ class Ritual {
     this.presence = Math.max(this.presence, glide(this.presence, presenceTarget, 6, dt));
 
     this.seal.update(dt);
+    // The seal is lit by the same flame as everything else, and the light comes
+    // from whichever side the candle is actually on.
+    this.sealArt.draw(
+      this.lighting.candle.value,
+      this.seal.hold,
+      clamp01((this.lighting.candle.x - window.innerWidth * 0.5) / (window.innerWidth * 0.5)) * 2 - 1
+    );
     this.lighting.update(dt, v);
 
     // ---- the world ----------------------------------------------------

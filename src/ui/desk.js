@@ -110,6 +110,9 @@ export class DeskUI {
       b.appendChild(cap);
 
       b.addEventListener('click', () => this.selectInk(ink));
+      // Bottles are ordered left to right, so pitching them down the row makes
+      // the six audibly distinct without anything having to look different.
+      b.dataset.pitch = String(1.18 - INKS.indexOf(ink) * 0.055);
       b.addEventListener('keydown', (e) => this.arrowNav(e, wrap));
       wrap.appendChild(b);
       this.inkNodes.set(ink.id, b);
@@ -118,6 +121,10 @@ export class DeskUI {
 
   selectInk(ink, silent = false) {
     this.ink = ink;
+    if (!silent && this.opts.onInkPickUp) {
+      const node = this.inkNodes.get(ink.id);
+      this.opts.onInkPickUp(Number(node && node.dataset.pitch) || 1);
+    }
     for (const [id, node] of this.inkNodes) {
       node.setAttribute('aria-checked', id === ink.id ? 'true' : 'false');
       node.tabIndex = id === ink.id ? 0 : -1;
@@ -133,15 +140,22 @@ export class DeskUI {
     wrap.innerHTML = '';
     this.stockNodes = new Map();
 
+    // A pile on the desk, not a fan of paper strips. Each stock is the object
+    // you would actually take that paper from — a bundle of loose sheets, a
+    // block of letter paper, a bound notebook, a ledger — so choosing one is
+    // picking something up rather than operating a control.
     for (const st of STOCKS) {
-      const b = el('button', 'obj sheet', {
+      const b = el('button', `obj pad pad-${st.id}`, {
         type: 'button',
         role: 'radio',
         'aria-checked': 'false',
         'aria-label': `${st.name} — ${st.note}`,
       });
       b.style.setProperty('--sheet-tint', st.tint);
-      b.appendChild(el('span', 'edge'));
+      b.appendChild(el('span', 'pad-shadow'));
+      b.appendChild(el('span', 'pad-body'));
+      b.appendChild(el('span', 'pad-edge'));
+      b.appendChild(el('span', 'pad-mark'));
       const cap = el('span', 'cap');
       cap.textContent = st.name;
       b.appendChild(cap);

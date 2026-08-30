@@ -323,15 +323,25 @@ export class CandleRenderer {
     body.addColorStop(0.72, shade(lit * 0.62));
     body.addColorStop(1, shade(lit * 0.26));
     g.fillStyle = body;
-    g.beginPath();
-    g.moveTo(cx - w / 2, bot);
-    g.lineTo(cx - w / 2, top + hgt * 0.02);
-    g.quadraticCurveTo(cx, top - hgt * 0.03, cx + w / 2, top + hgt * 0.02);
-    g.lineTo(cx + w / 2, bot);
-    g.closePath();
+    // The wax outline, kept as a path so the subsurface glow can be clipped to
+    // it. Filling that glow as a plain rectangle draws a visible warm box
+    // hanging above the candle, which is not what wax does.
+    const waxPath = () => {
+      g.beginPath();
+      g.moveTo(cx - w / 2, bot);
+      g.lineTo(cx - w / 2, top + hgt * 0.02);
+      g.quadraticCurveTo(cx, top - hgt * 0.03, cx + w / 2, top + hgt * 0.02);
+      g.lineTo(cx + w / 2, bot);
+      g.closePath();
+    };
+    waxPath();
     g.fill();
 
-    // Subsurface scattering from the flame down into the wax.
+    // Subsurface scattering from the flame down into the wax. Clipped to the
+    // wax, and starting from transparent so there is no edge at the top.
+    g.save();
+    waxPath();
+    g.clip();
     g.globalCompositeOperation = 'lighter';
     const sss = g.createLinearGradient(0, top - hgt * 0.05, 0, top + hgt * 0.5);
     const a = clamp01(level) * 0.55;
@@ -339,7 +349,8 @@ export class CandleRenderer {
     sss.addColorStop(0.35, `rgba(255, 142, 60, ${a * 0.35})`);
     sss.addColorStop(1, 'rgba(255, 120, 40, 0)');
     g.fillStyle = sss;
-    g.fillRect(cx - w / 2, top - hgt * 0.05, w, hgt * 0.6);
+    g.fillRect(cx - w, top - hgt * 0.1, w * 2, hgt * 0.7);
+    g.restore();
     g.globalCompositeOperation = 'source-over';
 
     // Melted rim and pool at the top.
@@ -430,9 +441,19 @@ export class CandleRenderer {
     g.save();
     g.globalCompositeOperation = 'lighter';
 
-    // Outer envelope: the dim orange halo of burning gas.
-    g.globalAlpha = lv * 0.5;
-    g.fillStyle = 'rgba(255, 122, 34, 0.5)';
+    // Outer envelope: the dim orange halo of burning gas. Filled with a
+    // gradient that fades out before it reaches the path, not a flat colour —
+    // a solid fill through a flame-shaped path draws a hard tan outline around
+    // the flame, which is the one thing burning gas does not have.
+    g.globalAlpha = lv * 0.55;
+    const hx = this.cx + (this.spine[3] ? this.spine[3].x : 0);
+    const hy = this.wickY - this.flameH * 0.42;
+    const halo = g.createRadialGradient(hx, hy, 0, hx, hy, this.flameH * 0.92);
+    halo.addColorStop(0, 'rgba(255, 138, 44, 0.55)');
+    halo.addColorStop(0.45, 'rgba(255, 116, 30, 0.30)');
+    halo.addColorStop(0.78, 'rgba(238, 96, 22, 0.09)');
+    halo.addColorStop(1, 'rgba(220, 84, 18, 0)');
+    g.fillStyle = halo;
     this.strokeFlamePath(g, this.flameOutline(1.18, 1.5));
     g.fill();
 

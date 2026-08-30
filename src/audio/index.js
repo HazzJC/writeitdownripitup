@@ -69,6 +69,12 @@ export class Soundscape {
     this.writing.rustle(level, dur);
   }
 
+  /** Glass set down on wood — choosing an ink. */
+  clink(pitch, level) {
+    if (!this.started) return;
+    this.writing.clink(pitch, level);
+  }
+
   setInstrument(name) {
     if (this.writing) this.writing.setInstrument(name);
   }
