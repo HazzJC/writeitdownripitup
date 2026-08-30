@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Ritual",
+  "version": "1.0.0",
+  "identifier": "com.harryjameschapman.ritual",
+
+  "build": {
+    "frontendDist": "../dist/app",
+    "beforeBuildCommand": "npm run build:dist",
+    "beforeDevCommand": "npm run build:dist"
+  },
+
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Ritual",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 620,
+        "resizable": true,
+        "center": true,
+        "fullscreen": false,
+        "theme": "Dark",
+        "backgroundColor": "#05060a"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "copyright": "Harry James Chapman",
+    "category": "Utility",
+    "shortDescription": "Write it down. Let it go.",
+    "longDescription": "A writing ritual on a rainy desk. The storm answers what you write, and the candle takes the page when you are done. Nothing is saved.",
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" }
+    }
+  }
+}

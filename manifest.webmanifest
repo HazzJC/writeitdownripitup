@@ -1,0 +1,17 @@
+{
+  "name": "Ritual — Write it down. Let it go.",
+  "short_name": "Ritual",
+  "description": "A writing ritual on a rainy desk. The storm answers what you write, and the candle takes the page when you are done. Nothing is saved.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05060a",
+  "theme_color": "#0a0c11",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+
+# Build outputs. dist/ritual.html and the .exe are release artefacts, not
+# source — regenerate them with `npm run build:single` / `npm run build:desktop`.
+dist/
+src-tauri/target/
+
+# Tauri regenerates these from tauri.conf.json on every build.
+src-tauri/gen/

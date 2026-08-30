@@ -11,6 +11,7 @@
  */
 
 import { HANDS, INSTRUMENTS, INKS, STOCKS } from '../write/hands.js';
+import { assetUrl } from '../core/assets.js';
 
 const el = (tag, cls, attrs) => {
   const n = document.createElement(tag);
@@ -184,13 +185,9 @@ export class DeskUI {
     const lines = document.getElementById('page-lines');
     if (!sheet) return;
     const s = sheet.style;
-    // A url() inside a custom property is resolved against the stylesheet that
-    // *uses* it, not the element it is set on — so a bare relative path would
-    // be looked up under /styles/. Resolve against the document instead.
-    const abs = (p) => new URL(p, document.baseURI).href;
     s.setProperty('--stock-tint', stock.tint);
-    s.setProperty('--stock-image', `url('${abs(stock.texture)}')`);
-    s.setProperty('--stock-crease', `url('${abs(stock.crease)}')`);
+    s.setProperty('--stock-image', `url('${assetUrl(stock.texture)}')`);
+    s.setProperty('--stock-crease', `url('${assetUrl(stock.crease)}')`);
     s.setProperty('--stock-grain', String(stock.grain));
     s.setProperty('--age', String(stock.ageing));
     // Deckle only belongs on handmade stock; a notebook page is cut square.

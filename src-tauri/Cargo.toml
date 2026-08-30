@@ -1,0 +1,24 @@
+[package]
+name = "ritual"
+version = "1.0.0"
+description = "Write it down. Let it go."
+authors = ["Harry James Chapman"]
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+# Ritual is a webview and nothing else — no plugins, no host access — so the
+# binary is almost entirely Tauri's own runtime. These settings trade compile
+# time for size, which is the right way round for something built rarely and
+# downloaded occasionally.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

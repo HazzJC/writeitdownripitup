@@ -9,13 +9,57 @@ until the storm breaks, let go, and the candle takes the page.
 
 Nothing is saved. There is no server and no storage. When it burns, it is gone.
 
+Live at **<https://ritual.harryjameschapman.com>**.
+
+## Running and building
+
 ```bash
-node server.mjs
+npm start              # dev server on http://localhost:5173
+npm run build:single   # dist/ritual.html  — the whole app in one file
+npm run build:desktop  # a Windows .exe and installer
 ```
 
-Then open <http://localhost:5173>. It is a static site with no build step; any
-static server will do, but it must be served over `http://` because the source
-is ES modules.
+There is no build step for the website. Cloudflare Pages serves the repository
+root directly with the build command left empty, which is the most robust
+configuration available: nothing sits between a push and a working site that
+can fail. Every asset path is relative and the app makes no network requests
+once loaded, so the repo root simply *is* the site.
+
+The dev server exists only because ES modules cannot be loaded over `file://`.
+
+### The three ways to run it
+
+| | Size | Needs |
+| --- | --- | --- |
+| **The website** | 2.1 MB | Nothing. Installable from Edge or Chrome, and works offline once visited. |
+| **`dist/ritual.html`** | 3.1 MB | Nothing at all — one file, double-click it. Works on any machine, including Macs. |
+| **`Ritual.exe`** | 4.7 MB | Windows with WebView2 (shipped with Windows 11). |
+
+The single file inlines everything as data URIs, so opening it makes exactly one
+request: the file itself. That is also why it is the only artefact that needs a
+bundler — modules are blocked over `file://`, so the 25 of them are flattened
+into one classic script with esbuild. esbuild is a devDependency; the website
+and the desktop build both ship the original source untouched.
+
+The desktop build is the same web app in a WebView2 window, which is Chromium —
+so it renders identically to the site. Rust's only job is to open the window; no
+commands are registered and no capabilities are granted, because the app asks
+the host for nothing. Build prerequisites are Rust, MSVC build tools, and
+WebView2. It is unsigned, so Windows shows a SmartScreen prompt on first run.
+
+### Regenerating
+
+Two files are generated and committed, and want re-running when assets change:
+
+```bash
+npm run build:sw       # sw.js — the offline precache list and its version
+npm run build:icons    # favicon → every PNG size, plus the Windows .ico
+```
+
+`sw.js` keys its cache to a hash of every file's contents, so a changed asset
+means a new cache name and the old one is dropped. Forgetting to re-run it is
+recoverable: `index.html` is fetched network-first precisely so a stale cache
+can always correct itself.
 
 ---
 
@@ -265,6 +309,16 @@ src/
 
 styles/               base, scene, paper, ui, and the self-hosted fonts
 assets/               CC0 PBR textures and OFL fonts — see assets/CREDITS.md
+
+tools/
+  build-sw.mjs        generates sw.js (offline precache list + version)
+  build-icons.mjs     favicon.svg -> every PNG size, and the Windows .ico
+  build-single.mjs    the one-file build
+  build-dist.mjs      the clean tree the desktop build bundles
+
+src-tauri/            the desktop shell: a window, and nothing else
+_headers              Cloudflare Pages caching and security headers
+sw.js                 GENERATED — do not edit
 ```
 
 ---
@@ -287,6 +341,19 @@ assets/               CC0 PBR textures and OFL fonts — see assets/CREDITS.md
 
 - No build step, no dependencies, no network calls at runtime.
 - Fonts and textures are bundled, so it works offline.
+- **Ctrl+Alt+D** opens the debug overlay (or add `?debug` to the URL). It
+  tracks intensity and presence on a rolling graph, prints every number the
+  scene is reading, and gives you a slider for each of the two values that
+  drive the whole world — so you can pin the storm at 0, at 1, or sweep it
+  through the range and watch each subsystem respond, instead of writing for
+  three minutes to see what happens. It also fires thunder and lightning on
+  demand and switches hand, pen, ink and paper. Nothing is built until you
+  open it.
+
+  Ctrl+Alt+D rather than Ctrl+Shift+D because the latter is "bookmark all
+  tabs" in Chrome and Edge, and a page cannot preventDefault a browser-level
+  shortcut.
 - `window.ritual` is exposed for poking at in the console. Setting
   `ritual.debugIntensity = 0.8` pins the storm at a chosen level;
   `ritual.debugIntensity = null` hands control back to the meter.
+  `ritual.debugPresence` does the same for the slower one.
