@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ritual — Write it down. Let it go.</title>
+<meta name="description" content="A writing ritual. The storm builds as you write, and the candle takes the page when you are done.">
+<meta name="theme-color" content="#0a0c11">
+<link rel="stylesheet" href="styles/fonts.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/scene.css">
+<link rel="stylesheet" href="styles/paper.css">
+<link rel="stylesheet" href="styles/ui.css">
+</head>
+<body>
+
+<!-- Filter definitions: the torn edge of the sheet, and the paper's tooth. -->
+<svg id="defs" width="0" height="0" aria-hidden="true" focusable="false"
+     style="position:absolute;pointer-events:none">
+  <defs>
+    <!-- Deckle: roughen the alpha edge of the sheet so it reads as torn
+         rather than guillotined. Applied only to the paper layers, never to
+         the text — displacing the text would desynchronise the caret. -->
+    <filter id="deckle" x="-8%" y="-8%" width="116%" height="116%"
+            filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.028 0.05"
+                    numOctaves="4" seed="17" result="coarse"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.34"
+                    numOctaves="2" seed="5" result="fine"/>
+      <feMerge result="rough">
+        <feMergeNode in="coarse"/>
+        <feMergeNode in="fine"/>
+      </feMerge>
+      <feDisplacementMap in="SourceGraphic" in2="rough" scale="11"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- A gentler version for the ash and the burnt edge. -->
+    <filter id="char-edge" x="-15%" y="-15%" width="130%" height="130%"
+            color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.07"
+                    numOctaves="3" seed="29" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="7"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ═══════════════════════════════ THE ROOM ═══════════════════════════════ -->
+<div id="room" aria-hidden="true">
+
+  <!-- The window wall, standing at the back of the room -->
+  <div id="wall">
+    <div id="window">
+      <canvas id="sky"></canvas>
+      <canvas id="glass"></canvas>
+      <div id="pane-gloss"></div>
+      <div id="mullions">
+        <span class="bar v" style="left:25%"></span>
+        <span class="bar v" style="left:50%"></span>
+        <span class="bar v" style="left:75%"></span>
+      </div>
+      <div id="window-frame"></div>
+      <div id="condensation"></div>
+    </div>
+
+    <div id="curtain-left" class="curtain"></div>
+    <div id="curtain-right" class="curtain"></div>
+  </div>
+
+  <!-- The desk: a receding plane with a real wood scan on it -->
+  <div id="desk">
+    <div id="desk-top"></div>
+  </div>
+  <div id="desk-edge"></div>
+
+  <!-- Set dressing: drawn on canvas so it relights with the candle -->
+  <canvas id="props"></canvas>
+
+  <!-- Light that the room receives, painted over everything -->
+  <div id="lightwash"></div>
+  <div id="flashwash"></div>
+  <canvas id="atmos"></canvas>
+  <div id="storm-grade"></div>
+  <div id="desat"></div>
+  <div id="warmth"></div>
+  <div id="grain"></div>
+  <div id="vignette"></div>
+</div>
+
+<!-- ═══════════════════════════════ THE PAGE ═══════════════════════════════ -->
+<div id="page-stage">
+  <div id="page-wrap">
+    <article id="page">
+      <div id="page-shadow"></div>
+      <div id="page-sheet">
+        <div id="page-lines"></div>
+        <div
+          id="script"
+          contenteditable="true"
+          spellcheck="false"
+          autocapitalize="sentences"
+          role="textbox"
+          aria-multiline="true"
+          aria-label="Write here"
+        ></div>
+        <div id="placeholder">Begin…</div>
+        <div class="curl"></div>
+      </div>
+      <canvas id="burn"></canvas>
+
+      <!-- The info tab, attached to the page itself -->
+      <button id="info-tab" type="button" aria-label="About this ritual, and a plain text box">
+        <span class="tab-paper"></span>
+        <span class="tab-mark">i</span>
+      </button>
+    </article>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ THE OBJECTS ═════════════════════════════ -->
+
+<!-- Instruments, lying in a brass tray -->
+<div id="tray" class="tool-group" role="radiogroup" aria-label="Writing instrument"></div>
+
+<!-- Ink bottles -->
+<div id="inks" class="tool-group" role="radiogroup" aria-label="Ink"></div>
+
+<!-- The stack of paper stock -->
+<div id="stock" class="tool-group" role="radiogroup" aria-label="Paper"></div>
+
+<!-- The specimen booklet: the hand you write in -->
+<div id="specimen" role="group" aria-label="Handwriting">
+  <div class="spec-book">
+    <button class="spec-flip prev" type="button" aria-label="Previous hand">‹</button>
+    <div class="spec-page">
+      <div class="spec-sample">Ritual</div>
+      <div class="spec-name"></div>
+    </div>
+    <button class="spec-flip next" type="button" aria-label="Next hand">›</button>
+  </div>
+</div>
+
+<!-- The candle, and the seal you hold to finish -->
+<div id="candle-stage">
+  <canvas id="candle"></canvas>
+</div>
+
+<button id="seal" type="button" aria-label="Hold to finish, then let it go">
+  <span class="seal-wax"></span>
+  <span class="seal-sigil"></span>
+  <span class="seal-ring"></span>
+  <span class="seal-hint">hold</span>
+</button>
+
+<!-- ══════════════════════════════ OVERLAYS ════════════════════════════════ -->
+
+<!-- Opening: the ritual needs a gesture to begin (and to start audio) -->
+<div id="threshold">
+  <div class="th-inner">
+    <h1 class="th-title">Ritual</h1>
+    <p class="th-sub">Write it down. Let it go.</p>
+    <button id="begin" type="button">
+      <span class="begin-flame"></span>
+      <span class="begin-label">light the candle</span>
+    </button>
+    <p class="th-note">Sound is part of it. Headphones, if you have them.</p>
+  </div>
+</div>
+
+<!-- The info sheet, with the plain text box -->
+<div id="info-sheet" hidden>
+  <div class="info-paper">
+    <button id="info-close" type="button" aria-label="Close">×</button>
+    <h2>Ritual</h2>
+    <p class="info-lede">Write it down. Let it go. Nothing you type here leaves
+      this page — there is no server, no save, no history. When you are done you
+      burn it, and it is gone.</p>
+
+    <div class="info-cols">
+      <section>
+        <h3>The storm</h3>
+        <p>The weather answers your writing. It listens to <em>your</em> pace,
+          not anyone else's — when you break into a sprint faster than your own
+          average, the rain picks up, the wind rises, the thunder closes in.</p>
+        <p>Stop to think and it doesn't cut out; it rolls away slowly and leaves
+          you a steady rain to sit in.</p>
+      </section>
+      <section>
+        <h3>The objects</h3>
+        <p>Everything is on the desk. Pick up an <em>instrument</em> from the
+          tray, choose an <em>ink</em>, take a sheet from the <em>stack</em>,
+          and flip the little <em>specimen book</em> to change the hand you
+          write in.</p>
+        <p>When it's finished, press and hold the <em>wax seal</em> until the
+          storm breaks — then let go.</p>
+      </section>
+    </div>
+
+    <h3 class="plain-head">Plain text</h3>
+    <p class="info-note">If the handwriting is hard to read, or you'd rather just
+      type, write here instead. It stays in sync with the page.</p>
+    <textarea id="plain-text" spellcheck="true" placeholder="Write here instead…"></textarea>
+
+    <div class="info-controls">
+      <label class="ctl">
+        <span>Volume</span>
+        <input id="vol" type="range" min="0" max="100" value="85">
+      </label>
+      <label class="ctl ctl-check">
+        <input id="reduce-motion" type="checkbox">
+        <span>Calm the storm (less motion)</span>
+      </label>
+      <label class="ctl ctl-check">
+        <input id="show-meter" type="checkbox">
+        <span>Show the intensity meter</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- The intensity meter, as a brass barometer -->
+<div id="meter" hidden>
+  <div class="meter-face">
+    <div class="meter-needle"></div>
+    <div class="meter-label">storm</div>
+    <div class="meter-read">0.00</div>
+  </div>
+  <div class="meter-detail"></div>
+</div>
+
+<!-- After the burn -->
+<div id="afterward" hidden>
+  <div class="after-inner">
+    <p class="after-line" id="after-1">It&rsquo;s gone&hellip;</p>
+    <p class="after-line" id="after-2">and you&rsquo;re still here.</p>
+    <p class="after-note" id="after-3"></p>
+    <button id="again" type="button">another page</button>
+  </div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

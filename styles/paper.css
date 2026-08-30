@@ -1,0 +1,342 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   The page: an angled, deckle-edged, slightly crumpled sheet lying on the
+   desk, and the handwriting on it.
+   ───────────────────────────────────────────────────────────────────────── */
+
+#page-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+#page-wrap {
+  position: relative;
+  width: min(50vw, 38vh * 1.42, 640px);
+  height: min(60vh, 44vw * 1.34);
+  margin-top: 3vh;
+  margin-right: 4vw;
+  perspective: 1500px;
+  perspective-origin: 50% 20%;
+  pointer-events: none;
+}
+
+#page {
+  position: absolute;
+  inset: 0;
+  /* Angled, as though set down rather than placed square. */
+  transform:
+    rotateX(15deg)
+    rotateZ(-1.3deg)
+    translateZ(0);
+  transform-origin: 50% 30%;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+  transition: transform .9s var(--ease-soft), filter .6s ease;
+}
+
+/* Lifts a touch when you are actually writing on it. */
+#page.writing { transform: rotateX(11deg) rotateZ(-1deg) translateZ(14px); }
+
+/* ── the shadow the sheet casts on the desk ─────────────────────────────── */
+#page-shadow {
+  position: absolute;
+  inset: 2% -4% -8% -4%;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .72);
+  filter: blur(26px);
+  transform: translateZ(-14px) translateY(2%) scale(.98);
+  opacity: calc((.55 + var(--candle) * .35) * var(--sheet-left, 1));
+  pointer-events: none;
+}
+
+/* ── the sheet ──────────────────────────────────────────────────────────── */
+#page-sheet {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+}
+
+/* The paper itself lives on its own layer so the deckle filter can chew its
+   edges without displacing the text (which would desynchronise the caret). */
+#page-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--stock-tint, #e6d8b6);
+  background-image:
+    /* the candle, warming the right-hand edge */
+    radial-gradient(70% 90% at 108% 76%,
+      rgba(255, 186, 104, calc(.42 * var(--candle))) 0%,
+      rgba(255, 160, 78, calc(.14 * var(--candle))) 34%,
+      rgba(0,0,0,0) 66%),
+    /* cold light from the window, falling on the top edge */
+    radial-gradient(90% 60% at 42% -14%,
+      rgba(168, 194, 240, calc(.10 + var(--flash) * .55)) 0%,
+      rgba(0,0,0,0) 70%),
+    /* ageing and handling marks */
+    radial-gradient(58% 44% at 18% 88%, rgba(126, 96, 52, calc(.10 * var(--age))), transparent 70%),
+    radial-gradient(40% 30% at 88% 14%, rgba(140, 108, 58, calc(.09 * var(--age))), transparent 72%),
+    radial-gradient(24% 20% at 62% 52%, rgba(120, 92, 48, calc(.05 * var(--age))), transparent 76%),
+    /* the scanned paper stock */
+    var(--stock-image, none);
+  background-size:
+    auto, auto, auto, auto, auto,
+    cover;
+  background-blend-mode:
+    screen, screen, multiply, multiply, multiply, multiply;
+  filter: url(#deckle) brightness(calc(.60 + var(--candle) * .46 + var(--flash) * .5)) saturate(1.04);
+  box-shadow:
+    inset 0 0 60px rgba(92, 66, 34, .28),
+    inset 0 -18px 40px rgba(60, 42, 20, .22);
+}
+
+/* The crease map, lit from the candle side so the crumple has real relief. */
+#page-sheet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* A slope map: mid-grey is flat, lighter and darker are the two faces of a
+     fold. Overlaid, that reads as real relief rather than a printed pattern. */
+  background-image: var(--stock-crease, none);
+  background-size: cover;
+  mix-blend-mode: overlay;
+  opacity: calc((.34 + var(--candle) * .36) * var(--stock-grain, 1));
+  filter: url(#deckle);
+  pointer-events: none;
+}
+
+/* ── ruling ─────────────────────────────────────────────────────────────── */
+#page-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(.35 + var(--candle) * .3);
+  z-index: 1;
+}
+#page-lines.ruled {
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      rgba(74, 96, 128, 0) 0,
+      rgba(74, 96, 128, 0) calc(var(--rule) - 1px),
+      rgba(74, 96, 128, .30) calc(var(--rule) - 1px),
+      rgba(74, 96, 128, .30) var(--rule));
+  background-position: 0 var(--rule-offset, 0px);
+}
+#page-lines.grid {
+  background-image:
+    repeating-linear-gradient(180deg,
+      rgba(74, 96, 128, 0) 0, rgba(74, 96, 128, 0) calc(var(--rule) - 1px),
+      rgba(74, 96, 128, .22) calc(var(--rule) - 1px), rgba(74, 96, 128, .22) var(--rule)),
+    repeating-linear-gradient(90deg,
+      rgba(74, 96, 128, 0) 0, rgba(74, 96, 128, 0) calc(var(--rule) - 1px),
+      rgba(74, 96, 128, .16) calc(var(--rule) - 1px), rgba(74, 96, 128, .16) var(--rule));
+}
+#page-lines.margin::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(150, 66, 66, .34);
+}
+
+/* ── the writing ────────────────────────────────────────────────────────── */
+#script {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 9% 10% 12% 12%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+
+  font-family: var(--hand-family, cursive);
+  font-size: calc(var(--hand-size, 1) * clamp(15px, .95vw + .55vh, 25px));
+  line-height: var(--hand-line, 1.6);
+  font-weight: var(--hand-weight, 400);
+  letter-spacing: var(--hand-tracking, 0);
+  color: var(--ink, #2b2118);
+  caret-color: var(--ink, #2b2118);
+
+  /* The whole hand leans. */
+  transform: skewX(var(--hand-slant, 0deg));
+  transform-origin: 0 0;
+
+  /* The paper's tooth showing through the stroke. */
+  filter: brightness(calc(.80 + var(--candle) * .22 + var(--flash) * .18));
+  text-rendering: optimizeLegibility;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+#script::-webkit-scrollbar { width: 0; height: 0; }
+
+#script .ln {
+  min-height: 1em;
+  white-space: pre-wrap;
+}
+
+/* A word tilts as a unit — letters within it stay related to each other. */
+#script .w {
+  display: inline-block;
+  white-space: nowrap;
+  transform: rotate(var(--wr, 0deg));
+}
+
+/* And each glyph sits slightly off from its neighbours. */
+#script .c {
+  display: inline-block;
+  transform:
+    translate(var(--dx, 0), var(--dy, 0))
+    rotate(var(--r, 0deg))
+    scale(var(--s, 1));
+  opacity: var(--f, 1);
+}
+
+/* Where it is supported, express ink density as colour rather than opacity —
+   1500 opacity layers is 1500 stacking contexts. */
+@supports (color: color-mix(in srgb, red 50%, transparent)) {
+  #script .c {
+    opacity: 1;
+    color: color-mix(in srgb, var(--ink) calc(var(--f, 1) * 100%), transparent);
+  }
+  /* Ink creeping into the fibres — a per-glyph shadow, so it is only worth
+     paying for on instruments that actually bleed. A ballpoint does not. */
+  #script.wet .c {
+    text-shadow:
+      0 0 calc(var(--ink-bleed, .3) * .055em)
+      color-mix(in srgb, var(--ink) calc(var(--f, 1) * 34%), transparent);
+  }
+}
+
+#script .sp { display: inline; }
+#script .c-empty { display: inline-block; }
+
+#placeholder {
+  position: absolute;
+  left: 12%;
+  top: 9%;
+  z-index: 2;
+  font-family: var(--hand-family, cursive);
+  font-size: calc(var(--hand-size, 1) * clamp(15px, .95vw + .55vh, 25px));
+  color: var(--ink, #2b2118);
+  opacity: .28;
+  pointer-events: none;
+  transition: opacity .6s ease;
+  transform: skewX(var(--hand-slant, 0deg));
+  filter: brightness(calc(.55 + var(--candle) * .45));
+}
+
+/* ── the burn canvas, over everything on the sheet ──────────────────────── */
+#burn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+#page-sheet.burning ~ #burn { opacity: 1; }
+
+/* The hole the fire eats through the sheet. A canvas can't be used as a live
+   CSS mask, so the paper is removed with an animated radial mask while the
+   ragged char on #burn overhangs and hides its smooth edge. */
+#page-sheet.burning {
+  -webkit-mask-image: radial-gradient(
+    circle at var(--burn-x, 92%) var(--burn-y, 90%),
+    transparent 0 var(--burn-hole, 0%),
+    #000 var(--burn-feather, 0%) 100%);
+  mask-image: radial-gradient(
+    circle at var(--burn-x, 92%) var(--burn-y, 90%),
+    transparent 0 var(--burn-hole, 0%),
+    #000 var(--burn-feather, 0%) 100%);
+}
+#page-sheet.burning #script { pointer-events: none; }
+
+/* ── the info tab, attached to the sheet ────────────────────────────────── */
+#info-tab {
+  position: absolute;
+  top: 5%;
+  right: -3.2%;
+  width: clamp(30px, 3.1vw, 46px);
+  height: clamp(30px, 3.1vw, 46px);
+  pointer-events: auto;
+  transform: translateZ(2px) rotate(6deg);
+  transition: transform .35s var(--ease-out), filter .35s ease;
+  filter: brightness(calc(.45 + var(--candle) * .5));
+}
+#info-tab:hover, #info-tab:focus-visible {
+  transform: translateZ(8px) rotate(2deg) scale(1.07);
+}
+#info-tab .tab-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(148deg, #ede2c6 0%, #ddcfa9 46%, #c9b98e 100%);
+  border-radius: 2px 3px 2px 2px;
+  box-shadow:
+    2px 4px 9px rgba(0,0,0,.55),
+    inset 0 1px 0 rgba(255,255,255,.45),
+    inset 0 -2px 4px rgba(120,96,56,.3);
+  /* A torn little tab, not a rounded rectangle. */
+  clip-path: polygon(4% 2%, 96% 0%, 100% 34%, 97% 68%, 99% 97%, 52% 100%, 6% 96%, 2% 52%, 5% 26%);
+}
+#info-tab .tab-mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(15px, 1.6vw, 24px);
+  color: #4a3a22;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ── curled corner, bottom right ────────────────────────────────────────── */
+#page-sheet .curl {
+  position: absolute;
+  right: 0; bottom: 0;
+  width: 12%;
+  aspect-ratio: 1;
+  background:
+    linear-gradient(315deg,
+      rgba(240, 232, 208, .95) 0%,
+      rgba(206, 192, 158, .9) 42%,
+      rgba(120, 102, 68, .55) 66%,
+      rgba(0,0,0,0) 67%);
+  filter: brightness(calc(.35 + var(--candle) * .55)) drop-shadow(-4px -4px 8px rgba(0,0,0,.5));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Machine-cut stock has no torn edge. */
+#page-sheet.cut::before,
+#page-sheet.cut::after { filter: brightness(calc(.30 + var(--candle) * .40 + var(--flash) * .55)); }
+#page-sheet.cut::after { filter: none; opacity: calc((.16 + var(--candle) * .30) * var(--stock-grain, 1)); }
+
+/* ── the offering: the page is carried to the flame ─────────────────────── */
+#page.offering {
+  transform:
+    translate3d(var(--offer-x, 0), var(--offer-y, 0), 60px)
+    rotateX(34deg)
+    rotateZ(7deg)
+    scale(.94);
+  transition: transform 1.15s var(--ease-soft);
+}
+#page.offering #info-tab { opacity: 0; transition: opacity .4s ease; pointer-events: none; }
+
+#page.gone {
+  opacity: 0;
+  transform:
+    translate3d(var(--offer-x, 0), calc(var(--offer-y, 0px) - 40px), 60px)
+    rotateX(40deg) rotateZ(9deg) scale(.9);
+  transition: opacity 2.2s ease, transform 2.2s var(--ease-soft);
+  pointer-events: none;
+}
+#page.gone #page-shadow { opacity: 0; transition: opacity 1.4s ease; }
