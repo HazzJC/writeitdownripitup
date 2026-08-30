@@ -1,0 +1,897 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   The objects on the desk. There are no menus: you choose by picking things
+   up. Everything here is lit by the same --candle / --flash variables as the
+   rest of the room, so the tools sit in the scene rather than on top of it.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.tool-group {
+  position: fixed;
+  z-index: 8;
+  display: flex;
+  pointer-events: auto;
+}
+
+/* Every pickable object shares this: it lifts toward you on hover, and the
+   candle catches it a little more when it does. */
+.obj {
+  position: relative;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+  transform-origin: 50% 90%;
+  transition:
+    transform .34s var(--ease-out),
+    filter .34s ease;
+  filter: brightness(calc(.34 + var(--candle) * .5 + var(--flash) * .45));
+}
+.obj:hover, .obj:focus-visible {
+  filter: brightness(calc(.55 + var(--candle) * .62 + var(--flash) * .45));
+  z-index: 3;
+}
+.obj[aria-checked="true"], .obj.picked {
+  filter: brightness(calc(.62 + var(--candle) * .68 + var(--flash) * .45));
+  z-index: 4;
+}
+
+/* A hand-written label that fades in on hover, like a museum card. */
+.obj .cap {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  white-space: nowrap;
+  font-family: 'Caveat', cursive;
+  font-size: clamp(13px, 1.05vw, 18px);
+  color: #e8d5ab;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 12px rgba(255,180,90,.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s var(--ease-out);
+}
+.obj:hover .cap, .obj:focus-visible .cap { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ══════════════════════════════ THE TRAY ══════════════════════════════════ */
+
+#tray {
+  left: 2.5vw;
+  bottom: 2.5vh;
+  height: min(13vh, 11vw);
+  align-items: flex-end;
+  gap: clamp(2px, .5vw, 10px);
+  padding: 1.4vh 1.6vw;
+  border-radius: 6px / 10px;
+  /* A shallow brass tray, catching the candle along its near lip. */
+  background:
+    linear-gradient(178deg,
+      rgba(96, 72, 30, .55) 0%,
+      rgba(58, 43, 18, .62) 38%,
+      rgba(36, 26, 11, .68) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(232, 198, 132, calc(.28 * var(--candle))),
+    inset 0 -3px 6px rgba(0,0,0,.6),
+    0 16px 34px rgba(0,0,0,.7);
+  filter: brightness(calc(.5 + var(--candle) * .4));
+}
+
+.pen {
+  width: clamp(16px, 1.5vw, 24px);
+  height: min(12vh, 10vw);
+  transform: rotate(-4deg);
+}
+.pen:hover, .pen:focus-visible { transform: rotate(-2deg) translateY(-10%) scale(1.04); }
+.pen[aria-checked="true"] {
+  transform: rotate(6deg) translateY(-26%) scale(1.06);
+}
+
+.pen .body { position: absolute; inset: 0; border-radius: 40% 40% 12% 12% / 3% 3% 1% 1%; }
+.pen .tip  { position: absolute; left: 50%; bottom: -1px; transform: translateX(-50%); }
+
+/* ── pencil: hexagonal, painted, sharpened ─────────────────────────────── */
+.pen.pencil .body {
+  background:
+    linear-gradient(90deg,
+      #4a3a12 0 14%, #8a6d21 14% 30%, #c9a637 30% 52%,
+      #9c7c26 52% 72%, #5c4715 72% 88%, #3a2c0d 88% 100%);
+  border-radius: 2px;
+  bottom: 22%;
+}
+.pen.pencil .tip {
+  width: 100%; height: 22%;
+  background:
+    linear-gradient(90deg, #7a5f34 0 20%, #c8a877 20% 50%, #8d6f43 50% 80%, #5c462a 80% 100%);
+  clip-path: polygon(0 0, 100% 0, 62% 82%, 38% 82%);
+}
+.pen.pencil .tip::after {
+  content: ''; position: absolute; left: 38%; right: 38%; bottom: 0; height: 24%;
+  background: linear-gradient(180deg, #4a4a50, #17171c);
+  clip-path: polygon(0 0, 100% 0, 60% 100%, 40% 100%);
+}
+.pen.pencil .body::after {
+  content: ''; position: absolute; left: 0; right: 0; top: -14%; height: 14%;
+  background: linear-gradient(180deg, #d9838a 0 62%, #9a5a60 62% 100%);
+  border-radius: 2px 2px 0 0;
+  box-shadow: inset 0 -3px 0 rgba(180,160,120,.5);
+}
+
+/* ── ballpoint: plastic barrel with a clip ─────────────────────────────── */
+.pen.ballpoint .body {
+  background:
+    linear-gradient(90deg,
+      #10131b 0 16%, #2b3242 16% 34%, #48536c 34% 50%,
+      #29303f 50% 74%, #0d1017 74% 100%);
+  border-radius: 3px 3px 1px 1px;
+  bottom: 14%;
+}
+.pen.ballpoint .tip {
+  width: 74%; height: 15%;
+  background: linear-gradient(90deg, #6a6a70 0 24%, #b8b8c0 24% 52%, #6a6a70 52% 100%);
+  clip-path: polygon(0 0, 100% 0, 58% 100%, 42% 100%);
+}
+.pen.ballpoint .body::after {
+  content: ''; position: absolute; right: -22%; top: 8%; width: 22%; height: 34%;
+  background: linear-gradient(90deg, #7d848f, #c3cad6 40%, #5b626c);
+  border-radius: 2px;
+}
+
+/* ── fountain pen: resin barrel, gold band, a real nib ─────────────────── */
+.pen.fountain .body {
+  background:
+    linear-gradient(90deg,
+      #120b09 0 14%, #3a2119 14% 32%, #6b3d2c 32% 48%,
+      #38201a 48% 74%, #100a08 74% 100%);
+  border-radius: 44% 44% 8% 8% / 5% 5% 1% 1%;
+  bottom: 18%;
+}
+.pen.fountain .body::after {
+  content: ''; position: absolute; left: -8%; right: -8%; top: 40%; height: 7%;
+  background: linear-gradient(90deg, #6b511c, #e8c684 42%, #8a6a26);
+  border-radius: 1px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+.pen.fountain .tip {
+  width: 86%; height: 20%;
+  background: linear-gradient(90deg, #8a6a22 0 22%, #eccd8c 22% 48%, #a9832c 48% 78%, #6f5518 78% 100%);
+  clip-path: polygon(12% 0, 88% 0, 62% 74%, 54% 100%, 46% 100%, 38% 74%);
+}
+.pen.fountain .tip::after {
+  content: ''; position: absolute; left: 48%; top: 22%; width: 1.5px; bottom: 6%;
+  background: rgba(40,28,10,.8);
+}
+
+/* ── quill: a feather ──────────────────────────────────────────────────── */
+.pen.quill { width: clamp(22px, 2.1vw, 34px); }
+.pen.quill .body {
+  background:
+    linear-gradient(96deg,
+      rgba(0,0,0,0) 0 28%,
+      rgba(238, 230, 208, .92) 30%,
+      rgba(206, 194, 166, .85) 46%,
+      rgba(166, 152, 122, .7) 60%,
+      rgba(0,0,0,0) 68%);
+  clip-path: polygon(50% 0%, 78% 12%, 88% 40%, 66% 72%, 54% 88%, 46% 88%, 34% 72%, 12% 40%, 22% 12%);
+  bottom: 16%;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.6));
+}
+/* barbs */
+.pen.quill .body::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(74deg,
+    rgba(120,106,80,.30) 0 1px, rgba(0,0,0,0) 1px 4px);
+  clip-path: inherit;
+}
+.pen.quill .tip {
+  width: 26%; height: 20%;
+  background: linear-gradient(180deg, #d8cdb0, #8d8069 60%, #3c3428);
+  clip-path: polygon(28% 0, 72% 0, 58% 100%, 42% 100%);
+}
+
+/* ── charcoal: a broken black stick ────────────────────────────────────── */
+.pen.charcoal .body {
+  background:
+    linear-gradient(90deg, #0b0b0d 0 18%, #2a2a2e 18% 40%, #3a3a40 40% 56%, #17171a 56% 100%);
+  border-radius: 3px;
+  bottom: 6%;
+  clip-path: polygon(6% 0, 94% 3%, 100% 96%, 88% 100%, 12% 99%, 0 94%);
+}
+.pen.charcoal .tip { display: none; }
+
+/* ═══════════════════════════════ INK BOTTLES ══════════════════════════════ */
+
+#inks {
+  left: 3vw;
+  bottom: calc(2.5vh + min(13vh, 11vw) + 2vh);
+  gap: clamp(4px, .8vw, 14px);
+  align-items: flex-end;
+}
+
+.bottle {
+  width: clamp(26px, 2.6vw, 44px);
+  height: clamp(32px, 3.2vw, 54px);
+}
+.bottle:hover, .bottle:focus-visible { transform: translateY(-14%) scale(1.06); }
+.bottle[aria-checked="true"] { transform: translateY(-20%) scale(1.09); }
+
+/* The glass: a squat inkwell with heavy shoulders. */
+.bottle .glass {
+  position: absolute;
+  inset: 22% 0 0 0;
+  border-radius: 12% 12% 22% 22% / 8% 8% 16% 16%;
+  background:
+    /* the ink sitting in the bottom two-thirds */
+    linear-gradient(180deg,
+      rgba(0,0,0,0) 0 30%,
+      var(--ink-glass) 30%,
+      var(--ink-body) 100%),
+    /* glass body */
+    linear-gradient(96deg,
+      rgba(190, 210, 235, .22) 0 12%,
+      rgba(232, 244, 255, .38) 12% 22%,
+      rgba(120, 145, 175, .12) 22% 52%,
+      rgba(206, 226, 248, .28) 52% 70%,
+      rgba(110, 132, 162, .16) 70% 100%);
+  box-shadow:
+    inset 0 -6px 12px rgba(0,0,0,.55),
+    inset 0 3px 6px rgba(255,255,255,.18),
+    0 8px 16px rgba(0,0,0,.7);
+}
+/* Candlelight refracting through the glass and the ink. */
+.bottle .glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(48% 34% at 78% 74%,
+      rgba(255, 186, 104, calc(.5 * var(--candle))) 0%,
+      rgba(255, 150, 60, 0) 72%),
+    radial-gradient(20% 26% at 22% 26%,
+      rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 70%);
+  mix-blend-mode: screen;
+}
+/* Screw cap. */
+.bottle .cap-metal {
+  position: absolute;
+  left: 22%; right: 22%; top: 0; height: 26%;
+  border-radius: 2px 2px 0 0;
+  background:
+    linear-gradient(90deg, #14161c 0 18%, #3c4250 18% 40%, #565f70 40% 56%, #23272f 56% 82%, #0d0f13 82% 100%);
+  box-shadow: 0 2px 5px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.16);
+  transition: transform .34s var(--ease-out);
+}
+/* The chosen ink stands open. */
+.bottle[aria-checked="true"] .cap-metal {
+  transform: translate(38%, -68%) rotate(22deg);
+}
+.bottle .label {
+  position: absolute;
+  left: 12%; right: 12%; bottom: 16%;
+  height: 26%;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(226,214,184,.82), rgba(196,182,148,.7));
+  box-shadow: inset 0 0 4px rgba(120,96,56,.4);
+  opacity: .85;
+}
+
+/* ══════════════════════════════ PAPER STOCK ═══════════════════════════════ */
+
+#stock {
+  left: 1.5vw;
+  bottom: calc(2.5vh + min(13vh, 11vw) + clamp(32px, 3.2vw, 54px) + 6vh);
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.sheet {
+  width: clamp(58px, 6.4vw, 108px);
+  height: clamp(9px, 1.05vw, 17px);
+  margin-top: calc(-1 * clamp(3px, .35vw, 6px));
+  transform-origin: 12% 50%;
+}
+.sheet .edge {
+  position: absolute;
+  inset: 0;
+  border-radius: 1px 3px 2px 1px;
+  background: var(--sheet-tint, #e6d8b6);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,.6),
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -2px 3px rgba(110,86,48,.4);
+  /* Torn edges, so a stack of sheets doesn't look like a stack of cards. */
+  clip-path: polygon(0% 12%, 22% 4%, 48% 14%, 72% 2%, 96% 12%, 100% 52%,
+                     94% 92%, 68% 100%, 42% 90%, 16% 99%, 2% 84%);
+}
+.sheet:hover, .sheet:focus-visible { transform: translateX(9%) rotate(-1.6deg); }
+.sheet[aria-checked="true"] { transform: translateX(16%) rotate(-2.6deg) scale(1.03); }
+.sheet[aria-checked="true"] .edge {
+  box-shadow:
+    0 3px 8px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.55),
+    0 0 12px rgba(255, 186, 104, calc(.4 * var(--candle)));
+}
+.sheet .cap { bottom: auto; top: 50%; left: calc(100% + 10px); transform: translateY(-50%) translateX(-4px); }
+.sheet:hover .cap, .sheet:focus-visible .cap { transform: translateY(-50%) translateX(0); }
+
+/* ═════════════════════════════ SPECIMEN BOOK ══════════════════════════════ */
+
+#specimen {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5vh;
+  transform: translateX(-50%) rotate(-1.4deg);
+  z-index: 8;
+  pointer-events: auto;
+}
+
+.spec-book {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: min(30vw, 300px);
+  height: min(12vh, 96px);
+  padding: 0 clamp(16px, 1.7vw, 26px);
+  border-radius: 3px;
+  /* An open booklet: two leaves with a gutter shadow between them. */
+  background:
+    linear-gradient(90deg,
+      rgba(60,44,22,.85) 0 3%,
+      #d9cba4 3% 48%,
+      #b7a67c 49% 51%,
+      #e2d5b0 52% 97%,
+      rgba(60,44,22,.85) 97% 100%);
+  box-shadow:
+    0 14px 30px rgba(0,0,0,.75),
+    inset 0 0 24px rgba(120,92,48,.35),
+    inset 0 -6px 12px rgba(80,60,30,.3);
+  filter: brightness(calc(.42 + var(--candle) * .5 + var(--flash) * .35));
+}
+
+.spec-flip {
+  width: clamp(18px, 1.8vw, 28px);
+  display: grid;
+  place-items: center;
+  font-size: clamp(18px, 1.9vw, 28px);
+  color: #6a5330;
+  opacity: .55;
+  transition: opacity .2s ease, transform .2s ease;
+  border-radius: 2px;
+}
+.spec-flip:hover, .spec-flip:focus-visible { opacity: 1; transform: scale(1.2); }
+
+.spec-page {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+.spec-sample {
+  font-family: var(--spec-family, cursive);
+  font-size: var(--spec-size, 30px);
+  line-height: 1.1;
+  color: var(--ink-current, #2b2118);
+  transform: skewX(var(--spec-slant, 0deg));
+  text-shadow: 0 1px 0 rgba(255,255,255,.25);
+}
+.spec-name {
+  margin-top: .25em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(9px, .78vw, 12px);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: #7a6236;
+}
+
+/* ══════════════════════════════ THE CANDLE ════════════════════════════════ */
+
+#candle-stage {
+  position: fixed;
+  right: 3vw;
+  bottom: 1vh;
+  width: min(30vw, 40vh);
+  height: min(40vw, 52vh);
+  z-index: 5;
+  pointer-events: none;
+}
+#candle { width: 100%; height: 100%; }
+
+/* ══════════════════════════════ THE SEAL ══════════════════════════════════ */
+
+#seal {
+  position: fixed;
+  right: calc(3vw + min(30vw, 40vh) * .82);
+  bottom: 5vh;
+  width: clamp(64px, 6.6vw, 104px);
+  height: clamp(64px, 6.6vw, 104px);
+  z-index: 9;
+  opacity: 0;
+  transform: scale(.7) translateY(14px);
+  pointer-events: none;
+  transition: opacity .8s ease, transform .8s var(--ease-out);
+  filter: brightness(calc(.4 + var(--candle) * .55 + var(--flash) * .4));
+}
+/* It only appears once there is something worth burning. */
+#seal.ready {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+#seal:hover { transform: scale(1.06) translateY(-3px); }
+
+#seal .seal-wax {
+  position: absolute;
+  inset: 6%;
+  border-radius: 48% 52% 46% 54% / 52% 46% 54% 48%;
+  background:
+    radial-gradient(38% 34% at 34% 28%, rgba(255,150,140,.55), rgba(0,0,0,0) 62%),
+    radial-gradient(80% 80% at 50% 60%, #8e1f22 0%, #6a1417 58%, #430c0f 100%);
+  box-shadow:
+    inset 0 -6px 12px rgba(0,0,0,.55),
+    inset 0 4px 10px rgba(255,120,100,.22),
+    0 10px 22px rgba(0,0,0,.7);
+  /* Wax spreads unevenly. */
+  clip-path: polygon(50% 0%, 71% 5%, 88% 18%, 97% 39%, 96% 62%, 84% 82%,
+                     64% 96%, 42% 99%, 22% 89%, 8% 71%, 2% 48%, 9% 25%, 27% 8%);
+}
+#seal .seal-sigil {
+  position: absolute;
+  inset: 26%;
+  /* A struck flame device, pressed into the wax. */
+  background:
+    radial-gradient(48% 60% at 50% 62%, rgba(0,0,0,.42) 0 46%, rgba(0,0,0,0) 60%),
+    conic-gradient(from 180deg at 50% 62%,
+      rgba(255,170,150,.30) 0deg 40deg, rgba(0,0,0,.30) 40deg 160deg,
+      rgba(255,170,150,.26) 160deg 220deg, rgba(0,0,0,.28) 220deg 360deg);
+  clip-path: polygon(50% 0%, 66% 26%, 62% 42%, 78% 62%, 70% 88%, 50% 100%, 30% 88%, 22% 62%, 38% 42%, 34% 26%);
+  opacity: .85;
+}
+#seal .seal-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(232, 198, 132, .0);
+  transition: border-color .3s ease;
+}
+#seal.ready .seal-ring { border-color: rgba(232, 198, 132, .18); }
+
+/* The hold gauge: wax brightens and a ring closes as you press. */
+#seal::after {
+  content: '';
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(255, 196, 108, .95) calc(var(--hold, 0) * 360deg),
+    rgba(255, 196, 108, 0) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 58%, #000 60%, #000 66%, transparent 68%);
+  mask: radial-gradient(circle, transparent 0 58%, #000 60%, #000 66%, transparent 68%);
+  opacity: calc(var(--hold, 0) * .95);
+  pointer-events: none;
+}
+#seal.holding .seal-wax {
+  filter: brightness(calc(1 + var(--hold, 0) * .8)) saturate(calc(1 + var(--hold,0) * .5));
+}
+
+#seal .seal-hint {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  font-family: 'Caveat', cursive;
+  font-size: clamp(13px, 1.1vw, 18px);
+  color: #e8d5ab;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9);
+  opacity: 0;
+  transition: opacity .4s ease;
+  pointer-events: none;
+}
+#seal.ready .seal-hint { opacity: .7; }
+#seal.holding .seal-hint { opacity: 0; }
+
+/* ═══════════════════════════════ THRESHOLD ════════════════════════════════ */
+
+#threshold {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(70% 60% at 50% 46%, rgba(6,8,13,.72) 0%, rgba(3,4,7,.94) 68%, #020305 100%);
+  transition: opacity 1.4s ease, visibility 1.4s;
+}
+#threshold.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.th-inner { text-align: center; max-width: 32rem; padding: 2rem; }
+.th-title {
+  margin: 0;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(46px, 7vw, 104px);
+  letter-spacing: .22em;
+  text-indent: .22em;
+  color: #e9dcc0;
+  text-shadow: 0 0 40px rgba(255, 170, 80, .28), 0 4px 20px rgba(0,0,0,.9);
+}
+.th-sub {
+  margin: .2em 0 2.4em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(15px, 1.5vw, 22px);
+  letter-spacing: .07em;
+  color: #a99878;
+}
+#begin {
+  display: inline-flex;
+  align-items: center;
+  gap: .8em;
+  padding: .85em 1.9em;
+  border-radius: 2px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(14px, 1.3vw, 19px);
+  letter-spacing: .16em;
+  text-transform: lowercase;
+  color: #f0dfb8;
+  background: linear-gradient(180deg, rgba(70,48,22,.5), rgba(34,23,10,.6));
+  border: 1px solid rgba(200, 160, 96, .28);
+  box-shadow: 0 10px 30px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,210,150,.14);
+  transition: all .35s var(--ease-out);
+}
+#begin:hover {
+  background: linear-gradient(180deg, rgba(102,70,30,.62), rgba(52,34,14,.7));
+  border-color: rgba(232, 198, 132, .5);
+  box-shadow: 0 12px 40px rgba(0,0,0,.75), 0 0 34px rgba(255,168,72,.22),
+              inset 0 1px 0 rgba(255,210,150,.24);
+  transform: translateY(-2px);
+}
+.begin-flame {
+  width: 12px; height: 18px;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background: radial-gradient(60% 70% at 50% 72%, #fff2cf 0%, #ffc46c 38%, #ff8a2a 70%, rgba(255,110,30,0) 100%);
+  box-shadow: 0 0 14px rgba(255,168,72,.85);
+  animation: flick 2.4s ease-in-out infinite;
+}
+@keyframes flick {
+  0%,100% { transform: scaleY(1) translateX(0); opacity: 1; }
+  30% { transform: scaleY(1.12) translateX(.6px); opacity: .92; }
+  62% { transform: scaleY(.94) translateX(-.5px); opacity: 1; }
+}
+.th-note {
+  margin-top: 2.6em;
+  font-size: clamp(11px, .9vw, 14px);
+  letter-spacing: .1em;
+  color: #6f6350;
+}
+
+/* ══════════════════════════════ INFO SHEET ════════════════════════════════ */
+
+#info-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: grid;
+  place-items: center;
+  padding: 4vh 3vw;
+  background: rgba(4, 5, 9, .78);
+  backdrop-filter: blur(4px);
+  overflow-y: auto;
+}
+#info-sheet[hidden] { display: none; }
+
+.info-paper {
+  position: relative;
+  width: min(72ch, 92vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: clamp(24px, 3.4vw, 54px);
+  color: #33291c;
+  background-color: #e7dcc2;
+  background-image:
+    radial-gradient(60% 40% at 20% 90%, rgba(140,110,60,.10), transparent 70%),
+    url('../assets/textures/paper-creased.jpg');
+  background-size: auto, cover;
+  background-blend-mode: multiply, multiply;
+  box-shadow: 0 30px 80px rgba(0,0,0,.85);
+  filter: brightness(calc(.72 + var(--candle) * .28));
+  transform: rotate(-.35deg);
+}
+.info-paper h2 {
+  margin: 0 0 .1em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(30px, 3.4vw, 46px);
+  letter-spacing: .12em;
+}
+.info-paper h3 {
+  margin: 1.6em 0 .4em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(15px, 1.3vw, 19px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #6a5330;
+}
+.info-paper p { margin: 0 0 .9em; line-height: 1.62; font-size: clamp(14px, 1.12vw, 17px); }
+.info-lede { font-size: clamp(15px, 1.25vw, 19px) !important; font-style: italic; color: #4a3c28; }
+.info-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 2.4em; }
+.info-cols h3 { margin-top: 1.2em; }
+.info-note { font-size: clamp(13px, 1vw, 15px) !important; color: #5d4d34; }
+
+#info-close {
+  position: absolute;
+  top: clamp(10px, 1.4vw, 20px);
+  right: clamp(10px, 1.4vw, 20px);
+  width: 34px; height: 34px;
+  font-size: 26px;
+  line-height: 1;
+  color: #6a5330;
+  border-radius: 50%;
+  transition: background .2s, transform .2s;
+}
+#info-close:hover { background: rgba(120,92,48,.16); transform: rotate(90deg); }
+
+#plain-text {
+  display: block;
+  width: 100%;
+  min-height: 24vh;
+  margin-top: .4em;
+  padding: 1em 1.1em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(14px, 1.15vw, 17px);
+  line-height: 1.7;
+  color: #2b2118;
+  background: rgba(255, 252, 244, .55);
+  border: 1px solid rgba(120, 92, 48, .35);
+  border-radius: 2px;
+  box-shadow: inset 0 2px 8px rgba(120, 92, 48, .16);
+  resize: vertical;
+}
+#plain-text:focus { border-color: rgba(120, 92, 48, .7); background: rgba(255, 253, 248, .75); }
+
+.info-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4em 2.4em;
+  align-items: center;
+  margin-top: 2em;
+  padding-top: 1.4em;
+  border-top: 1px solid rgba(120, 92, 48, .28);
+}
+.ctl { display: flex; align-items: center; gap: .7em; font-size: clamp(13px, 1vw, 15px); color: #5d4d34; }
+.ctl input[type="range"] { width: 150px; accent-color: #8a5a20; }
+.ctl-check { cursor: pointer; }
+.ctl-check input { accent-color: #8a5a20; width: 16px; height: 16px; }
+
+/* ═══════════════════════════ INTENSITY METER ══════════════════════════════ */
+
+#meter {
+  position: fixed;
+  left: 1.6vw;
+  top: 2vh;
+  z-index: 20;
+  width: clamp(120px, 11vw, 168px);
+  pointer-events: none;
+  filter: brightness(calc(.55 + var(--candle) * .45));
+}
+#meter[hidden] { display: none; }
+
+.meter-face {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(58% 58% at 34% 28%, rgba(255,236,196,.16), rgba(0,0,0,0) 70%),
+    conic-gradient(from 135deg,
+      rgba(120, 150, 190, .5) 0deg,
+      rgba(190, 170, 120, .5) 120deg,
+      rgba(210, 120, 50, .55) 200deg,
+      rgba(190, 60, 40, .6) 270deg,
+      rgba(0,0,0,0) 271deg),
+    radial-gradient(circle, #22190f 0 62%, #3b2a16 63% 88%, #1a1209 100%);
+  border: 3px solid rgba(150, 112, 47, .6);
+  box-shadow: 0 10px 28px rgba(0,0,0,.75), inset 0 2px 8px rgba(0,0,0,.7),
+              inset 0 -2px 0 rgba(232,198,132,.16);
+}
+.meter-needle {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 2px; height: 38%;
+  background: linear-gradient(180deg, #f0d9a8, #b8712c);
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(calc(-135deg + var(--needle, 0) * 270deg));
+  transition: transform .12s linear;
+  box-shadow: 0 0 6px rgba(255,180,90,.6);
+  border-radius: 1px;
+}
+.meter-face::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 12%; aspect-ratio: 1;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #e8c684, #6a4a18);
+}
+.meter-label {
+  position: absolute;
+  left: 0; right: 0; top: 62%;
+  text-align: center;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 9px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(216, 186, 132, .6);
+}
+.meter-read {
+  position: absolute;
+  left: 0; right: 0; top: 72%;
+  text-align: center;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(13px, 1.1vw, 17px);
+  color: #e0c48a;
+}
+.meter-detail {
+  margin-top: .6em;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: .04em;
+  color: rgba(200, 176, 132, .62);
+  white-space: pre;
+}
+
+/* ══════════════════════════════ AFTERWARD ═════════════════════════════════ */
+
+#afterward {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2.4s ease;
+}
+#afterward[hidden] { display: none; }
+#afterward.shown { opacity: 1; pointer-events: auto; }
+
+.after-inner { text-align: center; max-width: 30rem; padding: 0 2rem; }
+
+/* Each line arrives on its own, slowly. The pacing is the point — the whole
+   sequence takes about eight seconds, and it should feel like being let go of
+   rather than like a results screen. */
+.after-line, .after-note, #again {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 2.6s ease, transform 2.6s var(--ease-out);
+}
+.after-line.in, .after-note.in, #again.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.after-line {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(24px, 3vw, 42px);
+  letter-spacing: .09em;
+  line-height: 1.35;
+  color: #cdbc9a;
+  text-shadow: 0 0 40px rgba(255,170,80,.2), 0 4px 20px rgba(0,0,0,.9);
+  margin: 0;
+}
+#after-2 { margin-bottom: 1.6em; }
+
+.after-note {
+  font-family: 'Caveat', cursive;
+  font-size: clamp(19px, 2.1vw, 30px);
+  letter-spacing: .02em;
+  color: #b9a583;
+  text-shadow: 0 0 30px rgba(255,170,80,.16), 0 3px 14px rgba(0,0,0,.9);
+  margin: 0 0 2.4em;
+}
+#again {
+  padding: .8em 1.8em;
+  border-radius: 2px;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(13px, 1.15vw, 17px);
+  letter-spacing: .15em;
+  color: #d9c69f;
+  border: 1px solid rgba(200, 160, 96, .26);
+  background: rgba(40, 28, 14, .5);
+  transition: all .35s var(--ease-out);
+}
+#again:hover {
+  border-color: rgba(232, 198, 132, .55);
+  background: rgba(70, 48, 22, .6);
+  transform: translateY(-2px);
+}
+
+/* ═════════════════════════════ NARROW SCREENS ═════════════════════════════ */
+
+/* A phone has to hold the same objects in a third of the width. The tools
+   stack into three rows down the left; the candle and the seal keep the right
+   edge. The paper stack is the one thing that goes — it is the least missed of
+   the four choices, and the sheet is still visible behind the writing. */
+@media (max-width: 820px), (max-aspect-ratio: 3/4) {
+  :root { --window-h: 26vh; --desk-y: 27vh; }
+
+  #page-wrap {
+    width: min(92vw, 520px);
+    height: min(44vh, 96vw);
+    margin-top: 0;
+    margin-right: 0;
+  }
+  #page { transform: rotateX(9deg) rotateZ(-.8deg); }
+
+  /* The candle keeps the bottom-right corner. Its flame lands at roughly
+     12–17vh from the bottom, which is why nothing else may sit there. */
+  #candle-stage { width: 38vw; height: 30vh; right: -8vw; bottom: -3vh; }
+
+  #tray {
+    left: 2vw; bottom: 2vh;
+    height: 8.5vh;
+    padding: .8vh 2vw;
+    gap: 2px;
+  }
+  .pen { width: clamp(12px, 3.4vw, 20px); height: 7.4vh; }
+  .pen.quill { width: clamp(17px, 4.6vw, 27px); }
+
+  #inks { left: 2vw; bottom: 12vh; gap: 1.4vw; }
+  .bottle { width: clamp(19px, 5.2vw, 30px); height: clamp(24px, 6.4vw, 37px); }
+
+  #specimen { left: 2vw; right: auto; bottom: 20.5vh; transform: rotate(-1.4deg); }
+  .spec-book { width: 60vw; max-width: 260px; height: 7.5vh; padding: 0 3vw; }
+  .spec-flip { width: 14px; font-size: 20px; }
+
+  /* Above the flame, clear of both the candle and the booklet. */
+  #seal {
+    right: 3vw; bottom: 21vh;
+    width: clamp(52px, 13vw, 64px);
+    height: clamp(52px, 13vw, 64px);
+  }
+  #seal .seal-hint { top: auto; bottom: calc(100% + 6px); }
+
+  #stock { display: none; }
+
+  #meter { transform: scale(.72); transform-origin: top left; }
+  .info-paper { padding: 20px 18px; }
+  .info-controls { gap: 1em 1.4em; }
+  .th-title { font-size: clamp(38px, 13vw, 68px); }
+}
+
+/* Very short landscape (a phone turned sideways): the booklet has to give way. */
+@media (max-height: 520px) {
+  :root { --window-h: 32vh; --desk-y: 33vh; }
+  #page-wrap { height: min(60vh, 42vw * 1.34); margin-top: 0; }
+  #tray { height: 15vh; }
+  .pen { height: 13vh; }
+  #inks { bottom: 18vh; }
+  #specimen { display: none; }
+  #seal { bottom: 3vh; right: 24vw; }
+  #candle-stage { width: 26vw; height: 40vh; }
+}
+
+/* Once it is over, the colour comes back. The 5% drain during the storm is not
+   consciously visible while it happens, which is exactly why lifting it here
+   reads as warmth rather than as an effect. */
+body.cleared #desat { opacity: 0; transition: opacity 7s ease; }
+body.cleared #storm-grade { opacity: 0; transition: opacity 7s ease; }
+body.cleared #warmth { opacity: 1; }
+
+#warmth {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+  opacity: 0;
+  transition: opacity 8s ease;
+  mix-blend-mode: soft-light;
+  background:
+    radial-gradient(60vw 60vh at 78% 72%, rgba(255, 186, 112, .5), rgba(0,0,0,0) 72%),
+    linear-gradient(0deg, rgba(255, 170, 96, .22), rgba(0,0,0,0) 60%);
+}

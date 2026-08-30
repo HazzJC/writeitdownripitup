@@ -1,0 +1,114 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Base: reset, tokens, and the light variables the engine writes into.
+   ───────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #05060a;
+}
+
+body {
+  font-family: 'EB Garamond', 'Cormorant Garamond', Georgia, serif;
+  color: #d9cdb6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+:root {
+  /* ── written every frame by src/scene/lighting.js ───────────────────── */
+  --candle: 1;          /* flame output, ~0.2 … 1.25          */
+  --candle-warmth: 1;   /* orange (low) … pale gold (high)    */
+  --flash: 0;           /* lightning, 0 … 1                   */
+  --flash-strong: 0;    /* flash², for hard-edged reactions   */
+  --ambient: 0.35;      /* what light is left in the sky      */
+  --warm-mix: 1;        /* 1 = candle rules, 0 = window rules */
+  --storm: 0;           /* the intensity meter, 0 … 1         */
+  --room-light: 0.6;    /* summed illumination                */
+
+  /* ── palette ────────────────────────────────────────────────────────── */
+  --ink-black: #05060a;
+  --wood-deep: #16100b;
+  --wood-dark: #2a1d14;
+  --wood-mid:  #43301f;
+  --wood-warm: #6b4a2c;
+
+  --flame-core: #fff2cf;
+  --flame-hot:  #ffc46c;
+  --flame-mid:  #ff9838;
+  --flame-deep: #c85a16;
+
+  --cold-hi:   #c4d6ff;
+  --cold-mid:  #6a86b8;
+  --cold-deep: #1b2740;
+
+  --brass-hi:  #e8c684;
+  --brass-mid: #96702f;
+  --brass-low: #4a3616;
+
+  --paper-warm: #e9dcc0;
+  --paper-pale: #f0eade;
+  --ink-brown:  #2b1d12;
+
+  /* ── geometry ───────────────────────────────────────────────────────── */
+  --window-top: 2vh;
+  --window-h: 46vh;
+  --desk-y: 44vh;
+  --ease-soft: cubic-bezier(.22,.61,.36,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+canvas { display: block; }
+
+::selection {
+  background: rgba(255, 178, 92, 0.28);
+  color: inherit;
+}
+
+/* Focus rings: visible, but in keeping — a warm glow rather than a blue ring. */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid rgba(255, 196, 108, 0.75);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* The writing surface is the one exception: a 2px ring around the whole sheet
+   destroys the illusion, and a text caret is already an unambiguous focus
+   indicator. Every other control keeps its ring. */
+#script:focus-visible,
+#plain-text:focus-visible { outline: none; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* When the writer asks for calm, or the OS does, stop the biggest movers.
+   The storm still runs — it just stops shaking the furniture. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion: 0; }
+}
+:root { --motion: 1; }
+body.calm { --motion: 0; }
