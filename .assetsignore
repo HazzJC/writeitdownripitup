@@ -21,11 +21,12 @@ dist
 tools
 *.exe
 
-# Development files.
+# Development and deployment files.
 package.json
 package-lock.json
 server.mjs
 README.md
+wrangler.jsonc
 .gitignore
 .gitattributes
 .assetsignore
