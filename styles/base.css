@@ -22,15 +22,11 @@ body {
 }
 
 :root {
-  /* ── written every frame by src/scene/lighting.js ───────────────────── */
-  --candle: 1;          /* flame output, ~0.2 … 1.25          */
-  --candle-warmth: 1;   /* orange (low) … pale gold (high)    */
+  /* ── written by src/scene/lighting.js, only when they move a visible step.
+        Every write here restyles the whole document; see publish(). ──── */
+  --candle: 1;          /* the flame, smoothed, ~0.2 … 1.25   */
   --flash: 0;           /* lightning, 0 … 1                   */
-  --flash-strong: 0;    /* flash², for hard-edged reactions   */
-  --ambient: 0.35;      /* what light is left in the sky      */
-  --warm-mix: 1;        /* 1 = candle rules, 0 = window rules */
   --storm: 0;           /* the intensity meter, 0 … 1         */
-  --room-light: 0.6;    /* summed illumination                */
 
   /* ── palette ────────────────────────────────────────────────────────── */
   --ink-black: #05060a;

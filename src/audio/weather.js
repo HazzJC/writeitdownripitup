@@ -61,6 +61,25 @@ export class RainVoice {
     this.roarLP.connect(this.roarGain);
     this.roarGain.connect(this.out);
 
+    // --- sheet: water running down the glass in a downpour ----------------
+    // At the top of the storm the pane stops being struck by separate drops
+    // and starts carrying a moving film of water. That is a wet, uneven wash
+    // in the mids — in the room with you, like the taps, so it bypasses the
+    // distance filter — and it trickles rather than hisses, because its level
+    // is walked about every frame (see update).
+    this.sheetSrc = core.noiseSource('pink', 1);
+    this.sheetBP = core.filter('bandpass', 1300, 0.8);
+    this.sheetLP = core.filter('lowpass', 3000, 0.7);
+    this.sheetGain = core.gain(0);
+    this.sheetSrc.connect(this.sheetBP);
+    this.sheetBP.connect(this.sheetLP);
+    this.sheetLP.connect(this.sheetGain);
+    this.sheetGain.connect(core.dry);
+    this.sheetSend = core.gain(0.2);
+    this.sheetGain.connect(this.sheetSend);
+    this.sheetSend.connect(core.reverbSend);
+    this.sheetWobble = 0;
+
     // Slow drift so the rain breathes instead of sitting still.
     this.drift = core.lfo(0.055, 0.16, this.bodyDrift.gain);
     this.drift2 = core.lfo(0.031, 90, this.bodyLP.frequency);
@@ -107,9 +126,16 @@ export class RainVoice {
     set(this.roarGain.gain,
       Math.pow(clamp01((s - 0.45) / 0.55), 1.5) * 0.16 * p, ctx, 0.5);
 
+    // The sheet exists only in a real downpour. Its level is a random walk
+    // scaled by the frame time, so it trickles the same way at 60Hz or 120Hz.
+    const sheet = Math.pow(clamp01((s - 0.5) / 0.5), 1.4) * p;
+    this.sheetWobble += (Math.random() - 0.5) * 0.9 * Math.sqrt(Math.min(dt, 0.1) * 60);
+    this.sheetWobble *= Math.exp(-Math.min(dt, 0.1) / 0.08);
+    set(this.sheetGain.gain, sheet * 0.085 * clamp01(0.7 + this.sheetWobble), ctx, 0.045);
+    set(this.sheetBP.frequency, lerp(1100, 1700, s) * (1 + this.sheetWobble * 0.08), ctx, 0.08);
+
     // --- drops on the pane ---------------------------------------------
-    // These are the rain, as far as the ear is concerned. Even at full storm
-    // the rate stays countable — a wall of ticks becomes hiss again.
+    // These are the rain, as far as the ear is concerned.
     //
     // Presence, not intensity, is what governs the opening. Writing your first
     // sentence pushes intensity up quickly, so gating the drops on intensity
@@ -117,7 +143,12 @@ export class RainVoice {
     // presence instead: one drop every ten seconds or so before you write,
     // roughly one every two seconds once you have, and a proper pane full of
     // water only after minutes.
-    const rate = lerp(0.5, 30, Math.pow(s, 1.2)) * lerp(0.06, 1, Math.pow(this.presence, 0.75));
+    //
+    // Up to 70 a second at the very top. Past about thirty the ticks stop
+    // being countable and run together into a patter, which is what a
+    // downpour against a window actually sounds like; the sheet above carries
+    // it the rest of the way. The steeper curve keeps the low end where it was.
+    const rate = lerp(0.5, 70, Math.pow(s, 1.6)) * lerp(0.06, 1, Math.pow(this.presence, 0.75));
 
     // Scheduled against the *audio* clock, not the render clock.
     //
@@ -158,7 +189,7 @@ export class RainVoice {
     const t = Math.max(ctx.currentTime, when || 0);
 
     // Every so often a fat drop lands, lower and slower than the rest.
-    const fat = Math.random() < 0.14;
+    const fat = Math.random() < lerp(0.14, 0.22, s);
     const dur = fat ? rand(0.05, 0.12) : rand(0.012, 0.045);
     const freq = fat ? rand(700, 1500) : rand(1500, 4200);
 
@@ -179,8 +210,10 @@ export class RainVoice {
 
     // Louder drops as the storm builds, but never by much - it is glass, not
     // a drum. The quietest taps at rest are meant to be almost missable.
+    // Above 0.6 the drops also land harder, up to +3dB at the very top, so a
+    // downpour is heard hammering the glass. Below that nothing has changed.
     const peak = (fat ? rand(0.055, 0.11) : rand(0.02, 0.06))
-      * lerp(0.55, 1.15, s)
+      * (lerp(0.55, 1.15, s) + Math.pow(clamp01((s - 0.6) / 0.4), 2) * 0.45)
       * lerp(0.7, 1, this.presence);
 
     g.gain.setValueAtTime(0, t);
@@ -200,7 +233,7 @@ export class RainVoice {
   /** Cut the rain away on submit. */
   release(seconds = 0.9) {
     const ctx = this.core.ctx;
-    for (const g of [this.bodyGain, this.patGain, this.roarGain, this.tapOut]) {
+    for (const g of [this.bodyGain, this.patGain, this.roarGain, this.sheetGain, this.tapOut]) {
       g.gain.cancelScheduledValues(ctx.currentTime);
       g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
       g.gain.linearRampToValueAtTime(0.01, ctx.currentTime + seconds);
@@ -388,6 +421,47 @@ export class ThunderVoice {
       echoG.gain.exponentialRampToValueAtTime(0.0001, t + delay + ed);
       echo.start(t + delay);
       echo.stop(t + delay + ed + 0.2);
+    }
+
+    // --- the crack: the air tearing, for strikes close enough to hear it --
+    // A distant strike is all rumble. A near one arrives as a ragged tear
+    // first, and the tear is what reads as lightning rather than as weather.
+    //
+    // Kept out of click territory deliberately, since clicks were the problem
+    // with the old thunder: a 7ms onset rather than an instant one, nothing
+    // above ~2.4kHz, and a crackle envelope made of ramps between points 5ms
+    // apart, so the waveform never steps — it only swells fast and unevenly.
+    if (near > 0.35) {
+      const crackAt = t + 0.004;
+      const cDur = lerp(0.22, 0.55, near) * (spread > 1 ? 1.35 : 1);
+      const csrc = ctx.createBufferSource();
+      csrc.buffer = core.pinkBuffer;
+      csrc.loop = true;
+      csrc.playbackRate.value = rand(0.8, 1.15);
+      const cbp = core.filter('bandpass', rand(700, 1100), 0.75);
+      const clp = core.filter('lowpass', 2400, 0.7);
+      const cg = core.gain(0);
+      csrc.connect(cbp); cbp.connect(clp); clp.connect(cg); cg.connect(this.out);
+
+      const cSteps = Math.max(12, Math.round(cDur / 0.005));
+      const cCurve = new Float32Array(cSteps);
+      const cAmp = Math.pow((near - 0.35) / 0.65, 1.3) * 0.26 * level;
+      for (let i = 0; i < cSteps; i++) {
+        const p = i / (cSteps - 1);
+        const onset = Math.min(1, (p * cDur) / 0.007);
+        const body = Math.pow(1 - p, 1.8);
+        const crackle = Math.random() < 0.3 ? rand(0.6, 1) : rand(0.08, 0.4);
+        cCurve[i] = onset * body * crackle * cAmp;
+      }
+      cCurve[0] = 0;
+      cCurve[cSteps - 1] = 0;
+      cg.gain.setValueAtTime(0, crackAt);
+      cg.gain.setValueCurveAtTime(cCurve, crackAt, cDur);
+      csrc.start(crackAt);
+      csrc.stop(crackAt + cDur + 0.05);
+      csrc.onended = () => {
+        try { csrc.disconnect(); cbp.disconnect(); clp.disconnect(); cg.disconnect(); } catch (_) {}
+      };
     }
 
     const cleanup = () => {

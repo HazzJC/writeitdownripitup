@@ -162,19 +162,26 @@ not the same question as *how long has it been raining*, so there is a second,
 much slower value: **presence**, which starts at zero and takes a couple of
 minutes of writing to reach one.
 
-A session therefore opens with a dry sky and no rain at all. After the first
-words a single drop lands on the pane, then another — about one every four
-seconds. The rain arrives over minutes, not seconds, and the storm can only
-ever be as loud as the weather that has actually accumulated. Both the sound
-and the rain you can see are gated by it.
+A session therefore opens with a dry sky and no rain at all, and stays dry
+until you write. Within a few seconds of the first word a light rain starts: a
+thin fall outside the window, drops beginning to gather on the pane, the odd
+tap on the glass. From there the weather thickens on its own slow clock, over
+minutes rather than seconds, and the storm can only ever be as loud as the
+weather that has actually built up. Both the sound and the rain you can see are
+gated by presence.
+
+The music waits for the writing too. Nothing plays when the candle is lit.
+About five seconds after you start, the score begins to steal in beneath the
+rain over eight seconds, so it arrives as an answer to starting rather than as
+a soundtrack that was already playing when you sat down.
 
 ### Punctuating moments
 
 | Moment | What happens |
 | --- | --- |
-| **Second paragraph** | A distant roll of thunder, guaranteed |
-| **Third paragraph** | A lightning strike, guaranteed |
-| **Later paragraphs** | Rolled against current intensity — a quiet sky answers rarely and only with thunder; a raging one answers almost always, and with lightning |
+| **Second paragraph** | A distant roll of thunder, guaranteed, with a faint bolt low in the far cloud |
+| **Third paragraph** | A lightning strike, guaranteed: a clear bolt, and closer |
+| **Later paragraphs** | Rolled against current intensity. A quiet sky answers rarely and from far off; a raging one answers almost always, and close. Every strike shows its bolt |
 | **Holding the seal** | The crescendo: a swell of about +0.20 above wherever you already are, over 2.4s, under a ceiling — clearly perceptible, but not a jump cut. One distant rumble as the sky gathers, and otherwise nothing |
 | **Letting go** | One enormous strike directly overhead — the flash holds the room white and takes seconds to fade, with deep thunder right behind it. Then the release: the heavy weather is cut and the page goes to the candle |
 | **After the burn** | Tranquility. The score resolves to one open sustained chord, the colour comes back into the room, and the closing lines arrive one at a time over about eight seconds |
@@ -198,26 +205,42 @@ it swamps everything else — so there is none of it.
   wall; a slightly less muffled layer that only arrives in heavy rain; and the
   thing that actually carries the character: discrete resonant *taps* of
   individual drops striking the pane, spread across the stereo field because
-  the window is wide. Even at full storm the rate stays countable — a wall of
-  ticks becomes hiss again.
+  the window is wide. Light rain is a few countable ticks. At the top of the
+  storm they reach seventy a second and run together into a patter, and one
+  more layer arrives: water sheeting down the glass, kept in the mids and
+  walked about constantly so that it trickles rather than hisses.
 - **Wind** — brown noise through a resonant band, with gusts built from
   incommensurate LFOs so the pattern never audibly repeats.
 - **Thunder** — what makes synthesised thunder sound fake is a sharp
   transient: it reads as a click, or a door slamming. Real thunder heard from
   inside has almost no attack; it arrives, swells, and rolls while the sound
-  comes back off everything between you and it. So there is no crack layer at
-  all, the attack is slow even overhead, the filter stays under 500Hz, a second
-  delayed rumble returns off the hills, and most of the signal goes to a long
-  dark reverb. Measured: about 57% of its energy sits below 250Hz. Distance
+  comes back off everything between you and it. So the rumble's attack is slow
+  even overhead, its filter stays under 500Hz, a second delayed rumble returns
+  off the hills, and most of the signal goes to a long dark reverb. Distance
   changes the filter, the length, the tail, and the delay before you hear it.
+
+  A strike close enough to matter also has a **crack**: the air tearing just
+  before the rumble, which is what makes it read as lightning rather than as
+  weather. It is built to stay out of click territory, with a 7ms onset rather
+  than an instant one, nothing above about 2.4kHz, and a crackle envelope made
+  of ramps between points 5ms apart, so the waveform swells unevenly but never
+  steps. Rendered offline through the full master chain, its largest
+  sample-to-sample jump is at most 0.43 times the signal around it; a click is
+  several times that. And every strike now shows its bolt: faint and low in the
+  cloud for distant thunder, clear and close for lightning.
 - **The score** — generative, in D aeolian, over an unresolved i–VI–III–iv
   progression. Layers accrete as the storm builds: a drone, then slow detuned
   pads, then struck bell tones, then high glassy shimmer, then a low pulse near
   the peak. Note density and register are driven by intensity, so the music
-  speeds up when you speed up and thins out when you stop.
-- **The instrument on the paper** — a short filtered noise burst per keystroke,
-  shaped per instrument. A pencil rasps, a ballpoint ticks, a fountain pen lays
-  down something wet and round, a quill scratches.
+  speeds up when you speed up and thins out when you stop. It stays silent
+  until you have been writing for a few seconds (see presence, above).
+- **The instrument on the paper** — one continuous voice, not a burst per
+  keypress, which is what a keyboard sounds like rather than a pen. It is held
+  open while characters keep arriving and released after a real pause, so a
+  phrase is one unbroken stroke and stopping to think is heard as the nib
+  lifting. Each instrument shapes it: a pencil rasps, a ballpoint barely
+  whispers, a fountain pen lays down something wet and round, a quill
+  scratches.
 
 A master low-pass filter acts as a **distance** control: calm weather is heard
 through a closed window, and as the storm builds the filter opens until the
@@ -264,7 +287,10 @@ grain is dark noise blended with `screen`, not grey noise with `overlay` — on
 a scene this dark, overlay reduces to `2 × base × blend` and moves the result
 by about two levels out of 255, which is to say it does nothing. Dark noise
 through screen adds `blend × (1 − base)`, so it bites in the shadows and fades
-out in the highlights, which is also how real film grain behaves.
+out in the highlights, which is also how real film grain behaves. It re-rolls
+thirty times a second: often enough to read as film rather than as a stutter,
+and a rate that divides both 60Hz and 120Hz exactly, so every position is held
+for the same number of display frames.
 
 ## The page
 
@@ -328,7 +354,7 @@ src/
     writing.js        the pen on the paper, and the fire
   scene/
     textures.js       lace, film grain and grime, generated as data URIs
-    lighting.js       candle + lightning + ambient -> CSS custom properties
+    lighting.js       candle + lightning + ambient -> CSS, written sparingly
     sky.js            what you see through the window, in four depth layers
     glass.js          rain running down the pane
     candle.js         soft-body flame physics

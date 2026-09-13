@@ -45,12 +45,16 @@ export class Soundscape {
     this.started = true;
   }
 
-  update(intensity, dt, presence = 1) {
+  /**
+   * @param {number} writingFor seconds since the first keystroke (0 before it);
+   *                            the music waits on it.
+   */
+  update(intensity, dt, presence = 1, writingFor = Infinity) {
     if (!this.started) return;
     this.core.setIntensity(intensity, dt);
     this.rain.update(intensity, dt, presence);
     this.wind.update(intensity, dt);
-    this.music.update(intensity, dt);
+    this.music.update(intensity, dt, writingFor);
     this.writing.update();
   }
 

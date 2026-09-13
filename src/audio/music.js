@@ -33,6 +33,16 @@ const PROGRESSION = [
 // Where the ritual lands once the page is burned: open, major, resolved.
 const TRANQUIL = { root: 50, chord: [0, 7, 12, 16, 19] };
 
+/**
+ * The music waits for the writing. The engine runs from the moment the candle
+ * is lit, but stays silent until you have been writing for ENTRY_DELAY
+ * seconds, then steals in over ENTRY_FADE. Rain first, then the tone — so it
+ * arrives as an answer to starting, rather than as a soundtrack that was
+ * already playing when you sat down.
+ */
+const ENTRY_DELAY = 5;
+const ENTRY_FADE = 8;
+
 export class MusicEngine {
   constructor(core) {
     this.core = core;
@@ -62,6 +72,8 @@ export class MusicEngine {
     this.intensity = 0;
     this.started = false;
     this.tranquil = false;
+    this.held = true;
+    this.enteredAt = null;
 
     this.nextNote = 0;      // absolute ctx time of the next scheduled event
     this.step = 0;          // event counter, advances the progression
@@ -77,7 +89,7 @@ export class MusicEngine {
     this.started = true;
     const ctx = this.core.ctx;
     this.nextNote = ctx.currentTime + 0.4;
-    this.out.gain.setTargetAtTime(0.5, ctx.currentTime, 2.0);
+    // No fade-in here: update() lets the music in once writing is under way.
     this.startDrone();
   }
 
@@ -123,19 +135,43 @@ export class MusicEngine {
     }
   }
 
-  update(v, dt) {
+  /**
+   * @param {number} writingFor seconds since the first keystroke, 0 before it.
+   *                            Defaults to "long enough", so a caller that
+   *                            does not know gets the old behaviour.
+   */
+  update(v, dt, writingFor = Infinity) {
     if (!this.started) return;
     const ctx = this.core.ctx;
     this.intensity = v;
     const s = clamp01(v);
 
-    // Overall level and brightness track the storm.
-    set(this.out.gain, this.tranquil ? 0.55 : lerp(0.34, 0.62, s), ctx, 0.6);
+    if (this.held && (this.tranquil || writingFor >= ENTRY_DELAY)) {
+      this.held = false;
+      this.enteredAt = ctx.currentTime;
+      // Begin the phrase from now. Left alone, the scheduler would try to
+      // catch up on every event it skipped while held, all at once.
+      this.nextNote = ctx.currentTime + 0.8;
+    }
+    // Timed on the audio clock, and eased so it creeps in rather than ramping.
+    const k = this.held ? 0 : clamp01((ctx.currentTime - this.enteredAt) / ENTRY_FADE);
+    const entry = k * k * (3 - 2 * k);
+
+    // Overall level and brightness track the storm. Going quiet for a new
+    // page is slower than tracking the storm, so the closing chord fades out.
+    set(this.out.gain, (this.tranquil ? 0.55 : lerp(0.34, 0.62, s)) * entry, ctx, this.held ? 2.4 : 0.6);
     set(this.delayMix.gain, lerp(0.30, 0.16, s), ctx, 0.6);
     set(this.feedback.gain, lerp(0.46, 0.32, s), ctx, 0.6);
     if (this.droneNodes) {
       set(this.droneNodes.g.gain, this.tranquil ? 0.5 : lerp(0.16, 0.44, s), ctx, 1.2);
       set(this.droneNodes.lp.frequency, lerp(420, 1600, s), ctx, 0.8);
+    }
+
+    if (this.held) {
+      // Nothing to schedule, and a paragraph accent queued now should not
+      // all ring out at once when the music does arrive.
+      this.pendingAccents.length = 0;
+      return;
     }
 
     // --- lookahead scheduler -------------------------------------------
@@ -303,6 +339,12 @@ export class MusicEngine {
     g.gain.exponentialRampToValueAtTime(0.0001, when + 1.1);
     o.start(when); o.stop(when + 1.2);
     o.onended = () => { try { o.disconnect(); g.disconnect(); } catch (_) {} };
+  }
+
+  /** Silence the music again until the next page's writing gets under way. */
+  hold() {
+    this.held = true;
+    this.enteredAt = null;
   }
 
   /** Queue a melodic accent - used for paragraph breaks. */

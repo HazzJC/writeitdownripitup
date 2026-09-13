@@ -28,11 +28,16 @@ export class SkyRenderer {
 
     this.clouds = null;
     this.landLayers = null;
+    // Half-resolution canvas for the sky and clouds. See draw().
+    this.backdrop = null;
+    this.bctx = null;
     this.cloudOffset = 0;
     this.cloudOffset2 = 0;
 
     this.drops = [];
-    this.maxDrops = 900;
+    // 900 drive everything up to a heavy rain; the rest only join in at the
+    // very top, when it is coming down in sheets.
+    this.maxDrops = 1500;
     this.bolt = null;
     this.boltAge = 0;
 
@@ -54,6 +59,14 @@ export class SkyRenderer {
     c.height = Math.round(this.h * this.dpr);
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.buildClouds();
+    // Half the CSS resolution. The sky is a gradient and the clouds are strips
+    // already stretched more than six times over, so there is no detail here
+    // for more pixels to show.
+    this.backdrop = document.createElement('canvas');
+    this.backdrop.width = Math.max(1, Math.ceil(this.w * 0.5));
+    this.backdrop.height = Math.max(1, Math.ceil(this.h * 0.5));
+    this.bctx = this.backdrop.getContext('2d', { alpha: false });
+    this.bctx.setTransform(this.backdrop.width / this.w, 0, 0, this.backdrop.height / this.h, 0, 0);
     this.buildLandscape();
     this.seedRain();
   }
@@ -118,6 +131,36 @@ export class SkyRenderer {
    *
    * Each layer is drawn flat black and recoloured at draw time by its depth.
    */
+  /**
+   * The rectangle of a layer that has any paint in it, plus a pixel of margin
+   * for antialiased edges. Scanned at full resolution rather than on a shrunken
+   * copy, because shrinking can step straight over a one-pixel branch and trim
+   * it off. Rows and columns stop at the first painted pixel, so it is quick.
+   */
+  opaqueBox(cv) {
+    const W = cv.width, H = cv.height;
+    const d = cv.getContext('2d').getImageData(0, 0, W, H).data;
+    const rowHas = (y) => {
+      for (let i = y * W * 4 + 3, end = i + W * 4; i < end; i += 4) if (d[i]) return true;
+      return false;
+    };
+    const colHas = (x, top, bottom) => {
+      for (let y = top, i = (top * W + x) * 4 + 3; y <= bottom; y++, i += W * 4) if (d[i]) return true;
+      return false;
+    };
+    let y0 = 0;
+    while (y0 < H && !rowHas(y0)) y0++;
+    if (y0 === H) return { x: 0, y: 0, w: 0, h: 0 };
+    let y1 = H - 1;
+    while (y1 > y0 && !rowHas(y1)) y1--;
+    let x0 = 0;
+    while (x0 < W && !colHas(x0, y0, y1)) x0++;
+    let x1 = W - 1;
+    while (x1 > x0 && !colHas(x1, y0, y1)) x1--;
+    const x = Math.max(0, x0 - 1), y = Math.max(0, y0 - 1);
+    return { x, y, w: Math.min(W, x1 + 2) - x, h: Math.min(H, y1 + 2) - y };
+  }
+
   buildLandscape() {
     const w = this.w, h = this.h;
     if (w < 2 || h < 2) return;
@@ -283,6 +326,10 @@ export class SkyRenderer {
       }
     }
 
+    // Most of every layer is empty sky. Drawing the whole canvas-sized bitmap
+    // each frame fills every one of those empty pixels; drawing only the
+    // occupied rectangle is pixel-for-pixel the same picture for far less work.
+    for (const L2 of [far, mid, near, fore]) L2.box = this.opaqueBox(L2.cv);
     this.landLayers = [far, mid, near, fore];
   }
 
@@ -513,7 +560,7 @@ export class SkyRenderer {
    * @param {boolean} grand    the single strike on release: wider, more
    *                           branched, and it stays in frame noticeably longer
    */
-  makeBolt(distance, grand = false) {
+  makeBolt(distance, grand = false, faint = false) {
     const w = this.w, h = this.h;
     const near = 1 - clamp01(distance);
     const startX = rand(0.12, 0.88) * w;
@@ -546,22 +593,28 @@ export class SkyRenderer {
         }
       }
     };
-    build(startX, -h * 0.05, endX, endY, lerp(1.1, 3.4, near) * (grand ? 1.9 : 1), grand ? 3 : 2);
+    const startY = faint ? h * rand(0.1, 0.26) : -h * 0.05;
+    const width = lerp(1.1, 3.4, near) * (grand ? 1.9 : faint ? 0.6 : 1);
+    build(startX, startY, endX, endY, width, grand ? 3 : faint ? 1 : 2);
     if (grand) {
       // A second fork, because the big one should not look like the others.
       build(startX + rand(-0.1, 0.1) * w, -h * 0.05,
         endX + rand(-0.3, 0.3) * w, endY + rand(-0.1, 0.1) * h,
         lerp(1.1, 3.4, near) * 1.2, 2);
     }
-    this.bolt = { segs, near, born: this.t, grand };
+    this.bolt = { segs, near, born: this.t, grand, faint };
     this.boltAge = 0;
   }
 
-  strike(distance, grand = false) {
-    // Only ~70% of ordinary strikes show a bolt in frame; the rest light the
-    // cloud from within. The final one is always drawn.
-    if (grand || Math.random() < 0.72) this.makeBolt(distance, grand);
-    else this.bolt = null;
+  /**
+   * @param {boolean} faint a strike further off, heard more than seen: still a
+   *                        bolt, but thinner, dimmer, less branched, and
+   *                        starting lower in the cloud so it reads as distant.
+   */
+  strike(distance, grand = false, faint = false) {
+    // Every strike shows its bolt. A third of them used to light the cloud
+    // from within and draw nothing, which read as the lightning going missing.
+    this.makeBolt(distance, grand, faint);
   }
 
   // ------------------------------------------------------------------ draw
@@ -583,9 +636,14 @@ export class SkyRenderer {
 
     // Rain: how many drops are live, how fast, and how far the wind shears them.
     // Scaled by presence, so the sky outside starts genuinely empty.
-    const active = Math.floor(lerp(0, this.maxDrops, Math.pow(s, 0.75)) * this.presence);
+    // Below 0.6 this is exactly the old curve. Above it, the extra drops
+    // arrive. Presence is eased, so the light rain at the start of writing is
+    // actually visible outside rather than a handful of streaks.
+    const downpour = Math.pow(clamp01((s - 0.6) / 0.4), 1.5);
+    const active = Math.floor(
+      (lerp(0, 900, Math.pow(s, 0.75)) + downpour * (this.maxDrops - 900)) * Math.pow(this.presence, 0.7));
     const shear = lerp(0.08, 0.62, s) * (1 + Math.sin(this.t * 0.31) * 0.25);
-    const speedMul = lerp(0.55, 1.5, s);
+    const speedMul = lerp(0.55, 1.5, s) + Math.pow(clamp01((s - 0.7) / 0.3), 2) * 0.35;
     for (let i = 0; i < active; i++) {
       const d = this.drops[i];
       const v = d.speed * speedMul * (0.5 + d.z * 0.5);
@@ -605,14 +663,21 @@ export class SkyRenderer {
   }
 
   draw() {
-    const g = this.ctx;
+    const main = this.ctx;
     const w = this.w, h = this.h;
     const L = this.lighting;
     const s = this.intensity;
     const flash = L.flash;
     if (w < 2 || h < 2) return;
 
-    g.clearRect(0, 0, w, h);
+    // The sky and its clouds are painted into a half-resolution backdrop and
+    // scaled up in one draw. They are the softest things in the scene, yet
+    // they were five full-canvas fills a frame at display resolution, and on
+    // integrated graphics the sky was the difference between 26 and 43 frames
+    // a second in a storm. Everything with an edge (the bolt, the land, the
+    // cottage, the rain) is still drawn at full resolution on top.
+    let g = this.bctx || main;
+    if (g === main) g.clearRect(0, 0, w, h);
 
     // --- sky ------------------------------------------------------------
     const sky = g.createLinearGradient(0, 0, 0, h);
@@ -694,6 +759,12 @@ export class SkyRenderer {
     }
     g.globalAlpha = 1;
 
+    // Opaque and covering, so it also stands in for clearing the canvas.
+    if (g !== main) {
+      g = main;
+      g.drawImage(this.backdrop, 0, 0, w, h);
+    }
+
     // --- the bolt (behind the landscape so trees silhouette against it) ---
     if (this.bolt) this.drawBolt(g);
 
@@ -753,13 +824,18 @@ export class SkyRenderer {
         // and roughly doubled the frame budget. At this distance the difference
         // between a linear lean and a curved one is not visible; the cost is.
         const sway = this.sway * L2.swayAmount;
-        if (Math.abs(sway) < 0.3) {
-          g.drawImage(L2.tinted, 0, 0, w, h);
-        } else {
-          g.save();
-          g.transform(1, 0, -sway / h, 1, sway, 0);
-          g.drawImage(L2.tinted, 0, 0, w, h);
-          g.restore();
+        const b = L2.box || { x: 0, y: 0, w: L2.tinted.width, h: L2.tinted.height };
+        if (b.w > 0 && b.h > 0) {
+          const sx = w / L2.tinted.width, sy = h / L2.tinted.height;
+          const dx = b.x * sx, dy = b.y * sy, dw = b.w * sx, dh = b.h * sy;
+          if (Math.abs(sway) < 0.3) {
+            g.drawImage(L2.tinted, b.x, b.y, b.w, b.h, dx, dy, dw, dh);
+          } else {
+            g.save();
+            g.transform(1, 0, -sway / h, 1, sway, 0);
+            g.drawImage(L2.tinted, b.x, b.y, b.w, b.h, dx, dy, dw, dh);
+            g.restore();
+          }
         }
 
         // Rain hangs in the air between the layers, so each one is veiled a
@@ -786,17 +862,32 @@ export class SkyRenderer {
     const shear = this.shear || 0.2;
     g.save();
     g.lineCap = 'round';
+    // Drawn in depth bands rather than one stroke per drop. Each drop used to
+    // be its own path, colour string and stroke: 900 draw calls a frame, and
+    // 1500 in a downpour. Six bands is six calls, and at a line under two
+    // pixels wide nobody can see the difference between six depths and
+    // continuous ones.
+    const lenMul = lerp(0.6, 1.5, s) + Math.pow(clamp01((s - 0.7) / 0.3), 2) * 0.6;
+    const BANDS = 6;
+    const paths = [];
+    for (let b = 0; b < BANDS; b++) paths.push(new Path2D());
     for (let i = 0; i < n; i++) {
       const d = this.drops[i];
-      const len = d.len * lerp(0.6, 1.5, s) * (0.4 + d.z * 0.6);
+      const len = d.len * lenMul * (0.4 + d.z * 0.6);
+      const band = Math.min(BANDS - 1, Math.max(0, Math.floor(((d.z - 0.25) / 0.75) * BANDS)));
+      const p = paths[band];
+      p.moveTo(d.x, d.y);
+      p.lineTo(d.x - len * shear, d.y - len);
+    }
+    for (let b = 0; b < BANDS; b++) {
+      const z = 0.25 + ((b + 0.5) / BANDS) * 0.75;
       // Rain catches whatever light there is; a flash makes the whole sheet glow.
-      const a = (0.05 + d.z * 0.16) * lerp(0.5, 1.1, s) + flash * 0.5 * d.z;
-      g.strokeStyle = `rgba(190, 212, 245, ${clamp01(a)})`;
-      g.lineWidth = 0.4 + d.z * 1.0;
-      g.beginPath();
-      g.moveTo(d.x, d.y);
-      g.lineTo(d.x - len * shear, d.y - len);
-      g.stroke();
+      // A light rain has to be visible as rain. Fewer drops is what says it is
+      // light; drops too faint to see just read as no rain at all.
+      const a = (0.05 + z * 0.16) * lerp(0.9, 1.25, s) + flash * 0.5 * z;
+      g.strokeStyle = `rgba(190, 212, 245, ${clamp01(a).toFixed(3)})`;
+      g.lineWidth = 0.55 + z * 1.05;
+      g.stroke(paths[b]);
     }
     g.restore();
   }
@@ -807,7 +898,7 @@ export class SkyRenderer {
     const age = this.boltAge;
     const life = clamp01(1 - age / (bolt.grand ? 0.5 : 0.22));
     if (life <= 0) return;
-    const a = Math.pow(life, 1.6) * lerp(0.35, 1, bolt.near);
+    const a = Math.pow(life, 1.6) * lerp(0.35, 1, bolt.near) * (bolt.faint ? 0.62 : 1);
 
     g.save();
     g.globalCompositeOperation = 'lighter';

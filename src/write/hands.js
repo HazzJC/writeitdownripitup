@@ -10,6 +10,18 @@
 /* ─────────────────────────────────────────────────────────── HANDS ──────── */
 
 export const HANDS = [
+  // First, because every session opens in the first hand. Of the twelve this
+  // is the most readable one that still looks written with a pen. Copperplate,
+  // the old default, is lovely and close to illegible at writing size; Kalam
+  // and Caveat read a touch more easily but look like felt-tip, not ink.
+  {
+    id: 'flowing',
+    name: 'Flowing',
+    note: 'looping and quick',
+    family: "'Dancing Script', cursive",
+    size: 1.18, line: 1.58, slant: -0.4, weight: 500,
+    jitter: 0.8, drift: 0.9, tracking: 0,
+  },
   {
     id: 'copperplate',
     name: 'Copperplate',
@@ -17,14 +29,6 @@ export const HANDS = [
     family: "'Mrs Saint Delafield', 'Dancing Script', cursive",
     size: 1.42, line: 1.42, slant: -1.2, weight: 400,
     jitter: 0.55, drift: 0.7, tracking: 0.004,
-  },
-  {
-    id: 'flowing',
-    name: 'Flowing',
-    note: 'looping and quick',
-    family: "'Dancing Script', cursive",
-    size: 1.10, line: 1.62, slant: -0.4, weight: 500,
-    jitter: 0.8, drift: 0.9, tracking: 0,
   },
   {
     id: 'letter',

@@ -49,6 +49,13 @@ export class LightingEngine {
     // The colour the room settles to, blended between candle warmth and the
     // cold blue of the window.
     this.warmMix = 1;
+
+    // What CSS last saw. See publish().
+    this.slowCandle = 1;
+    this.candleAge = 1;
+    this.published = {};
+    this.lightwash = null;
+    this.lastWash = '';
   }
 
   /**
@@ -176,21 +183,66 @@ export class LightingEngine {
     const candleLight = this.candle.value * 0.9;
     this.warmMix = clamp01(candleLight / (candleLight + windowLight + 0.001));
 
-    this.publish();
+    this.publish(dt);
   }
 
-  /** Push the current light state into CSS custom properties. */
-  publish() {
+  /**
+   * Push the light into CSS — sparingly, because this used to be the most
+   * expensive thing in the frame by a distance.
+   *
+   * A custom property written on :root makes the browser re-resolve style for
+   * the whole document, and repaint every element whose painting refers to any
+   * variable at all, even variables that never change. At the 1829x1143@175%
+   * this runs at on an Intel Iris Xe, writing eight of them every frame cost
+   * 520ms of style work a second and 550 megapixels a second of repainting,
+   * and held writing to 13 frames a second. Five of the eight were read by
+   * nothing.
+   *
+   * So the fast flicker is not published. It lives where it costs nothing: in
+   * the canvases, which redraw every frame regardless, and in the opacity of
+   * #lightwash, set on that one composited element directly. CSS gets a slow
+   * candle — the flame smoothed over a third of a second — and the storm, each
+   * written only when it has moved by a visible step. The flash is written
+   * every frame while a strike is lit, because a strike is fast and has to
+   * look it, and not at all otherwise.
+   */
+  publish(dt = 1 / 60) {
     const r = this.root.style;
-    r.setProperty('--candle', this.candle.value.toFixed(4));
-    r.setProperty('--candle-warmth', this.candle.warmth.toFixed(4));
-    r.setProperty('--flash', this.flash.toFixed(4));
-    r.setProperty('--ambient', this.ambient.toFixed(4));
-    r.setProperty('--warm-mix', this.warmMix.toFixed(4));
-    r.setProperty('--storm', this.intensity.toFixed(4));
-    // Convenience values so CSS doesn't need calc() gymnastics.
-    r.setProperty('--flash-strong', (this.flash * this.flash).toFixed(4));
-    r.setProperty('--room-light', (this.ambient + this.candle.value * 0.55 + this.flash * 1.4).toFixed(4));
+    this.slowCandle += (this.candle.value - this.slowCandle) * (1 - Math.exp(-Math.min(dt, 0.1) / 0.35));
+    // Stepped, and rate-limited too: a smoothed flame still crosses a step
+    // many times a second, and each crossing restyles the document. Ordinary
+    // wandering goes out at most every 150ms. A real change — a gust knocking
+    // the flame down, or the candle going out — is written immediately.
+    const candle = (Math.round(this.slowCandle / 0.02) * 0.02).toFixed(2);
+    const shown = this.published['--candle'];
+    this.candleAge += dt;
+    if (candle !== shown
+      && (shown === undefined || this.candleAge >= 0.15 || Math.abs(+candle - +shown) >= 0.08)) {
+      this.write(r, '--candle', candle);
+      this.candleAge = 0;
+    }
+    this.write(r, '--storm', (Math.round(this.intensity / 0.01) * 0.01).toFixed(2));
+    this.write(r, '--flash', this.flash > 0.002 ? this.flash.toFixed(3) : '0');
+
+    // The full-rate flicker, over the whole room. The /1.4 pairs with the
+    // brighter fixed gradient in scene.css so the result matches the old
+    // colour-times-opacity exactly, while staying inside opacity's 0..1.
+    if (!this.lightwash) this.lightwash = document.getElementById('lightwash');
+    if (this.lightwash) {
+      const c = this.candle.value;
+      const o = clamp01((c * (0.6 + 0.4 * c)) / 1.4).toFixed(3);
+      if (o !== this.lastWash) {
+        this.lightwash.style.opacity = o;
+        this.lastWash = o;
+      }
+    }
+  }
+
+  /** Set a property only if its text has changed since it was last written. */
+  write(style, name, value) {
+    if (this.published[name] === value) return;
+    this.published[name] = value;
+    style.setProperty(name, value);
   }
 
   /** Where the candle is on screen, in px. Set by the candle renderer. */
