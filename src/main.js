@@ -30,7 +30,16 @@ import { Haptics } from './ui/haptics.js';
 import { installDebug } from './ui/debug.js';
 import { Soundscape } from './audio/index.js';
 
-import { clamp01, glide, smoothstep } from './core/util.js';
+import { clamp01, easeOutCubic, glide, smoothstep } from './core/util.js';
+
+/**
+ * How much weather the first few seconds of writing bring on: a light rain,
+ * with drops starting on the pane, a thin fall outside and the odd tap. Reached
+ * over LIGHT_RAIN_ONSET seconds from the first keystroke; everything beyond it
+ * builds on presence's own slow clock.
+ */
+const LIGHT_RAIN = 0.2;
+const LIGHT_RAIN_ONSET = 6;
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -144,6 +153,8 @@ class Ritual {
     this.debugIntensity = null;
     this.debugPresence = null;
     this.viewportWasEmpty = false;
+    this.sealAcc = 0;
+    this.lastSealHold = -1;
     this.debug = installDebug(this);
   }
 
@@ -267,12 +278,16 @@ class Ritual {
     if (!ev || ev.kind === 'none') return;
 
     const near = 1 - ev.distance;
-    // Light first: you see a strike before you hear it.
+    // Light first: you see a strike before you hear it. Every roll of thunder
+    // comes with its lightning now. A 'lightning' event is a clear bolt; a
+    // 'thunder' event is further off, so its bolt is thinner, dimmer and
+    // starts lower in the cloud — but it is there, rather than the sky
+    // rumbling at nothing.
     this.lighting.strike(ev.distance, ev.level);
-    if (ev.kind === 'lightning') this.sky.strike(ev.distance);
+    this.sky.strike(ev.distance, false, ev.kind === 'thunder');
 
     // Then the sound, delayed by how far away it is — three seconds a kilometre.
-    const delay = ev.kind === 'lightning' ? ev.distance * 2.2 : ev.distance * 0.9;
+    const delay = ev.distance * (ev.kind === 'lightning' ? 2.2 : 1.6);
     setTimeout(() => {
       this.sound.strikeThunder(ev.distance, ev.level);
       this.haptics.thunder(ev.distance, ev.level);
@@ -458,6 +473,7 @@ class Ritual {
     this.events.reset();
     this.presence = 0;
     this.sound.music.tranquil = false;
+    this.sound.music.hold();
     this.phase = PHASE.WRITING;
     setTimeout(() => this.paper.focus(), 400);
   }
@@ -500,20 +516,30 @@ class Ritual {
 
     // Presence only starts accruing once there is writing to accompany.
     const writingFor = this.intensity.startedAt === null ? 0 : this.intensity.elapsed;
-    const presenceTarget = smoothstep(writingFor / 150);
+    // Two stages. Nothing at all before the first word; within a few seconds
+    // of it, a light rain; and from there the storm thickens over minutes.
+    const lightRain = writingFor > 0 ? LIGHT_RAIN * easeOutCubic(writingFor / LIGHT_RAIN_ONSET) : 0;
+    const presenceTarget = Math.max(lightRain, smoothstep(writingFor / 150));
     // Glides slowly, and never falls back — weather does not un-happen.
     this.presence = this.debugPresence !== null
       ? this.debugPresence
-      : Math.max(this.presence, glide(this.presence, presenceTarget, 6, dt));
+      : Math.max(this.presence, glide(this.presence, presenceTarget, this.presence < LIGHT_RAIN ? 1.6 : 6, dt));
 
     this.seal.update(dt);
     // The seal is lit by the same flame as everything else, and the light comes
-    // from whichever side the candle is actually on.
-    this.sealArt.draw(
-      this.lighting.candle.value,
-      this.seal.hold,
-      clamp01((this.lighting.candle.x - window.innerWidth * 0.5) / (window.innerWidth * 0.5)) * 2 - 1
-    );
+    // from whichever side the candle is actually on. Relit thirty times a
+    // second rather than every frame — it was 1.8ms a frame for a small disc
+    // of wax — except while it is being pressed, when it follows exactly.
+    this.sealAcc += dt;
+    if (this.sealAcc >= 1 / 30 || this.seal.hold !== this.lastSealHold) {
+      this.sealAcc = 0;
+      this.lastSealHold = this.seal.hold;
+      this.sealArt.draw(
+        this.lighting.candle.value,
+        this.seal.hold,
+        clamp01((this.lighting.candle.x - window.innerWidth * 0.5) / (window.innerWidth * 0.5)) * 2 - 1
+      );
+    }
     this.lighting.update(dt, v);
 
     // ---- the world ----------------------------------------------------
@@ -548,7 +574,7 @@ class Ritual {
     this.atmos.draw();
 
     // ---- audio ---------------------------------------------------------
-    this.sound.update(v, dt, this.presence);
+    this.sound.update(v, dt, this.presence, writingFor);
 
     this.debug.update(dt);
 

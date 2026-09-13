@@ -17,7 +17,7 @@
  * where the sky hits it.
  */
 
-import { clamp, clamp01, lerp, rand, randInt } from '../core/util.js';
+import { clamp, clamp01, lerp, rand, randInt, TAU } from '../core/util.js';
 
 const SPRITE_STEPS = 12;   // sprite LODs across the size range
 const SPRITE_MAX = 96;     // px of the largest sprite
@@ -31,7 +31,7 @@ export class GlassRenderer {
 
     this.beads = [];
     this.runners = [];
-    this.maxBeads = 520;
+    this.maxBeads = 820;
     this.spawnAcc = 0;
 
     this.sprites = [];
@@ -44,6 +44,11 @@ export class GlassRenderer {
     this.presence = 0;
     this.t = 0;
     this.shake = 0;
+    // The moving film of water in a downpour. See buildSheet().
+    this.sheet = null;
+    this.sheetPattern = null;
+    this.sheetLevel = 0;
+    this.sheetOffset = 0;
     this.resize();
   }
 
@@ -104,6 +109,60 @@ export class GlassRenderer {
     return this.sprites[Math.min(SPRITE_STEPS - 1, Math.round(k * (SPRITE_STEPS - 1)))];
   }
 
+  /**
+   * The film of water that forms on the glass in a downpour. Drawn once per
+   * resize, at half resolution: it is soft and always moving, so the extra
+   * detail would never be seen. Every streak follows a sum of sines with a
+   * whole number of cycles per tile height, so the texture repeats vertically
+   * without a seam as it scrolls.
+   */
+  buildSheet() {
+    const tw = Math.max(8, Math.ceil(this.w / 2));
+    const th = Math.max(8, Math.ceil(this.h / 2));
+    const cv = document.createElement('canvas');
+    cv.width = tw;
+    cv.height = th;
+    const g = cv.getContext('2d');
+    g.lineCap = 'round';
+
+    const streaks = Math.max(12, Math.round(tw / 5));
+    for (let i = 0; i < streaks; i++) {
+      const x0 = Math.random() * tw;
+      const k1 = 1 + Math.floor(Math.random() * 3);
+      const k2 = 4 + Math.floor(Math.random() * 6);
+      const a1 = rand(1.5, 6.5), a2 = rand(0.3, 1.8);
+      const p1 = Math.random() * TAU, p2 = Math.random() * TAU;
+      const xAt = (y) => {
+        const u = y / th;
+        return x0 + Math.sin(u * TAU * k1 + p1) * a1 + Math.sin(u * TAU * k2 + p2) * a2;
+      };
+      g.strokeStyle = `rgba(196, 218, 252, ${rand(0.04, 0.16).toFixed(3)})`;
+      g.lineWidth = rand(0.5, 2.6);
+      g.beginPath();
+      g.moveTo(xAt(0), 0);
+      for (let y = 3; y < th; y += 3) g.lineTo(xAt(y), y);
+      g.lineTo(xAt(th), th);
+      g.stroke();
+
+      // Brighter lenses where the flow thickens, carried down with it. Drawn
+      // twice near the top and bottom edges so the seam never cuts one.
+      const lenses = Math.floor(rand(0, 3));
+      for (let j = 0; j < lenses; j++) {
+        const y = Math.random() * th;
+        const rx = rand(0.8, 2), ry = rand(2.5, 7);
+        g.fillStyle = `rgba(220, 236, 255, ${rand(0.08, 0.22).toFixed(3)})`;
+        for (const yy of [y, y - th, y + th]) {
+          if (yy < -ry || yy > th + ry) continue;
+          g.beginPath();
+          g.ellipse(xAt(y), yy, rx, ry, 0, 0, TAU);
+          g.fill();
+        }
+      }
+    }
+    this.sheet = cv;
+    this.sheetPattern = this.ctx.createPattern(cv, 'repeat');
+  }
+
   resize() {
     const rect = this.canvas.getBoundingClientRect();
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -117,6 +176,7 @@ export class GlassRenderer {
     this.trail.height = Math.round(this.h * this.dpr);
     this.trailCtx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.trailCtx.clearRect(0, 0, this.w, this.h);
+    this.buildSheet();
 
     this.beads.length = 0;
     this.runners.length = 0;
@@ -134,8 +194,9 @@ export class GlassRenderer {
       x: clamp(x !== undefined ? x : Math.random() * this.w, 1, Math.max(1, this.w - 1)),
       y: y !== undefined ? y : Math.random() * this.h,
       r: r !== undefined ? r : rand(1.2, 3.6),
-      // A drop's own threshold varies - glass is not uniformly clean.
-      crit: rand(4.5, 9.5),
+      // A drop's own threshold varies - glass is not uniformly clean. In a
+      // downpour they give way sooner, so far more of them run.
+      crit: rand(4.5, 9.5) * lerp(1, 0.6, this.intensity),
       wob: Math.random() * 6.283,
     };
     this.beads.push(b);
@@ -175,18 +236,26 @@ export class GlassRenderer {
     const w = this.w, h = this.h;
     this.shake *= Math.exp(-dt / 0.16);
 
+    // The film only forms in a real downpour. It glides, so it gathers and
+    // drains away rather than switching on.
+    const sheetTarget = Math.pow(clamp01((s - 0.55) / 0.45), 1.3) * this.presence;
+    this.sheetLevel += (sheetTarget - this.sheetLevel) * (1 - Math.exp(-dt / 1.4));
+    this.sheetOffset += dt * lerp(140, 360, s);
+
     // --- new water arriving ------------------------------------------
     // Impact rate rises steeply: a calm window gets the odd bead, a storm is
     // being hosed down.
     // Presence scaled: the pane starts dry, and the first bead to appear is
     // a single drop rather than a scatter.
-    const rate = lerp(0.4, 95, Math.pow(s, 1.25)) * lerp(0.05, 1, this.presence);
+    const rate = lerp(0.4, 150, Math.pow(s, 1.45)) * lerp(0.05, 1, this.presence);
     this.spawnAcc += rate * dt;
     while (this.spawnAcc >= 1) {
       this.spawnAcc -= 1;
       if (this.beads.length < this.maxBeads) {
         // Bigger drops arrive in heavier rain.
-        this.spawnBead(Math.random() * w, Math.random() * h, rand(1.0, lerp(3.2, 7.5, s)));
+        // The first drops of a shower are big ones, so even a light rain puts
+        // something on the glass that can actually be seen.
+        this.spawnBead(Math.random() * w, Math.random() * h, rand(1.5, lerp(3.8, 7.5, s)));
       } else {
         // Saturated: instead of adding, fatten an existing bead.
         const b = this.beads[randInt(0, this.beads.length - 1)];
@@ -250,17 +319,17 @@ export class GlassRenderer {
     // Faster evaporation when calm; in a downpour the glass stays wet.
     g.save();
     g.globalCompositeOperation = 'destination-out';
-    g.fillStyle = `rgba(0,0,0,${lerp(0.055, 0.014, s)})`;
+    g.fillStyle = `rgba(0,0,0,${lerp(0.055, 0.009, s)})`;
     g.fillRect(0, 0, w, h);
     g.restore();
   }
 
   drawTrail(g, rn, prevY) {
-    const width = rn.r * 0.62;
+    const width = rn.r * lerp(0.62, 0.9, this.intensity);
     g.save();
     g.globalCompositeOperation = 'source-over';
     // The wet channel.
-    g.strokeStyle = `rgba(150, 180, 215, ${clamp01(0.10 + rn.r * 0.012)})`;
+    g.strokeStyle = `rgba(150, 180, 215, ${clamp01(0.10 + rn.r * 0.012 + this.intensity * 0.05)})`;
     g.lineWidth = width * 2;
     g.lineCap = 'round';
     g.beginPath();
@@ -309,11 +378,31 @@ export class GlassRenderer {
     g.drawImage(this.trail, 0, 0, w, h);
     g.restore();
 
+    // --- the sheet ------------------------------------------------------
+    // Two passes of the same film, the second mirrored and slower, so it reads
+    // as moving water rather than as one texture sliding down the glass.
+    if (this.sheetLevel > 0.01 && this.sheetPattern) {
+      const period = this.sheet.height * 2;
+      const sway = Math.sin(this.t * 0.9) * 3 + Math.sin(this.t * 2.3) * 1.2;
+      const base = clamp01(this.sheetLevel * (0.4 + lightMul * 0.6));
+      g.save();
+      g.globalCompositeOperation = 'screen';
+      g.fillStyle = this.sheetPattern;
+      g.globalAlpha = base;
+      this.sheetPattern.setTransform(new DOMMatrix([2, 0, 0, 2, sway, this.sheetOffset % period]));
+      g.fillRect(0, 0, w, h);
+      g.globalAlpha = base * 0.6;
+      this.sheetPattern.setTransform(
+        new DOMMatrix([-2, 0, 0, 2, w - sway * 0.7, (this.sheetOffset * 0.62) % period]));
+      g.fillRect(0, 0, w, h);
+      g.restore();
+    }
+
     // --- beads ----------------------------------------------------------
     // Water on glass at night is mostly dark. It is legible because it
     // distorts what is behind it, not because it glows — so this stays low.
     g.save();
-    g.globalAlpha = clamp01(0.12 + lightMul * 0.36);
+    g.globalAlpha = clamp01(0.22 + lightMul * 0.36);
     for (const b of this.beads) {
       const sp = this.spriteFor(b.r);
       const d = b.r * 2;
