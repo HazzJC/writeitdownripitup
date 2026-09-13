@@ -1,0 +1,32 @@
+# Everything in this directory is uploaded as the website, and for this site
+# the directory is the repository root.
+#
+# Workers, unlike Pages, does not leave out node_modules or .git on its own.
+# Once package.json arrived, the build installed its dependencies here and
+# they were uploaded as part of the site: the 148 MiB workerd binary failed
+# every deploy on the 25 MiB limit. Only the site itself belongs on the web:
+# index.html, the icons, the manifest and service worker, _headers, src/,
+# styles/ and assets/.
+
+**/node_modules
+**/.git
+**/.DS_Store
+.wrangler
+.claude
+
+# The desktop build, its tooling, and anything it produces. None of it is
+# part of the site, and a binary must never be served from it.
+src-tauri
+dist
+tools
+*.exe
+
+# Development files.
+package.json
+package-lock.json
+server.mjs
+README.md
+.gitignore
+.gitattributes
+.assetsignore
+# (end)
