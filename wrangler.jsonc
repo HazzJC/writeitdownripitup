@@ -1,0 +1,19 @@
+// Deployment settings for Cloudflare Workers Builds.
+//
+// The site is plain static files at the repository root, served as Workers
+// static assets. Cloudflare infers that for production deploys, but builds of
+// other branches run `wrangler versions upload`, which cannot, and failed with
+// "Missing entry-point to Worker script or to assets directory". Declaring it
+// here makes both kinds of build explicit.
+//
+// The name must stay "writeitdownripitup". It has to match the Worker in the
+// Cloudflare dashboard, which is the one the custom domain is attached to; a
+// different name would deploy to a different Worker. Which files in the
+// directory are actually uploaded is decided by .assetsignore.
+{
+  "name": "writeitdownripitup",
+  "compatibility_date": "2026-09-11",
+  "assets": {
+    "directory": "./"
+  }
+}
