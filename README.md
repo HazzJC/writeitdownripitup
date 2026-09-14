@@ -2,43 +2,372 @@
 
 **Write it down. Let it go.**
 
-A writing ritual on a rainy desk. You pick up a pen, choose an ink and a sheet,
-and write. The weather outside the window answers what you do. Rain thickens,
-wind rises, thunder closes in. When you are finished you hold a wax seal until
-the storm breaks, let go, and the candle takes the page.
+![A candlelit desk by a rainy window, with a handwritten page waiting](og.jpg)
 
-Nothing is saved. There is no server and no storage. When it burns, it is gone.
+Ritual is a quiet place to write the thing you cannot say. You sit at a
+candlelit desk beside a rainy window, pick up a pen, and write. As you write,
+the weather outside answers the way you are writing: the rain thickens, the
+wind rises, and thunder closes in. When you are finished, you press a wax seal,
+the storm breaks overhead, and the candle takes the page.
 
-## Get it
+Nothing is saved and nothing is sent. There is no account, no server and no
+storage. When the page burns it is gone, and you are still here.
 
-**Open it in your browser at <https://ritual.harryjameschapman.com>.** Nothing
-to install. It works offline after the first visit, and Edge and Chrome will
-offer to install it as a proper app with its own window and icon.
-
-**Or download it for Windows:**
-
-### [Download Ritual for Windows](https://github.com/HazzJC/writeitdownripitup/releases/latest/download/Ritual.exe)
-
-One file, 4.7 MB. Save it wherever you like, double-click it, and write. There
-is no installer and nothing to set up.
-
-The first time you run it, Windows will show a blue box saying **"Windows
-protected your PC"**. This is not a virus warning. It appears for every program
-that has not paid for a code-signing certificate, and this one has not. Click
-**More info**, then **Run anyway**. Windows only asks once.
-
-If you would rather have Ritual in your Start menu, there is an installer on
-the [releases page](https://github.com/HazzJC/writeitdownripitup/releases/latest)
-as well. Either is fine; the app is identical.
-
-The opening screen of the web version links to that same page, so people can
-find the download without being told it exists.
+**[Open it in your browser](https://ritual.harryjameschapman.com)** ·
+**[Download it for Windows](https://github.com/HazzJC/writeitdownripitup/releases/latest/download/Ritual.exe)**
 
 ---
 
-## Running from source
+## Why it exists
 
-Everything below is for developers. You do not need any of it to use Ritual.
+Writing the hard thing down, and then doing something with the paper, is an
+old and simple idea.
+
+Counsellors often suggest writing a letter you never send. You write to the
+person who hurt you, to someone you have lost, to someone you cannot talk to,
+or to a younger version of yourself. Because nobody will ever read it, you can
+say exactly what you mean, without softening it and without worrying how it
+will land. The point is the writing, not the sending.
+
+There is research behind the writing. In 1986 the psychologist James
+Pennebaker asked students to spend fifteen minutes a day, four days running,
+writing about the most upsetting experiences of their lives. In the months that
+followed, those students visited the health centre less often than students
+who had written about everyday things. Hundreds of studies have followed. The
+effect does not hold for everyone, but expressive writing has become a widely
+used and widely studied way of working through difficult feelings.
+
+There is research behind the ripping up, too. In a 2024 study at Nagoya
+University, people who had been deliberately insulted wrote down how they felt
+about it. Those who then threw the paper away, or shredded it, saw their anger
+fall back to where it had been before the insult. For those who kept the paper,
+it did not fall away in the same way. Getting rid of the page seems to matter.
+
+Ritual brings those ideas together. You write to someone, or about something,
+knowing that no one will ever read it. Then, instead of screwing up the page and
+dropping it in a bin, you get a ceremony: the storm gathers, breaks, and the
+candle burns the page away in front of you. The letting go becomes something you
+can see and hear, not just something you decide.
+
+> Ritual is not therapy, and it is not a substitute for it. It borrows the shape
+> of a few simple practices. If what you are carrying is more than a page can
+> hold, please talk to someone: a friend, your GP, or a counsellor.
+
+## What happens
+
+1. **Light the candle.** The room is dark, and the sky outside is dry.
+2. **Choose what to write with.** There are no menus. Everything is an object on
+   the desk: a pen from the tray (pencil, ballpoint, fountain pen, quill or
+   charcoal), an ink from the row of bottles, a sheet from the pile of paper,
+   and a handwriting style from the specimen booklet.
+3. **Write.** Within a few seconds of the first word, a light rain begins. As you
+   find your pace the weather builds with you: wind moving the trees, rain
+   running down the glass, thunder rolling closer, and lightning splitting the
+   sky. Music steals in underneath. When you stop to think, the storm rolls away
+   and leaves you a steady rain to sit in. Write hard and fast, and even your
+   handwriting starts to shake.
+4. **Hold the seal.** When you are done, press and hold the wax seal, and the sky
+   gathers itself. Let go, and one enormous strike lands overhead, the room
+   flashes white, and the heavy weather is cut away.
+5. **Let it burn.** The page is carried to the candle and burns from the corner
+   nearest the flame until there is nothing left but embers and ash.
+6. **Afterwards.** The colour comes back into the room, the music settles into a
+   single open chord, and a few words appear: *It's gone… and you're still
+   here*, followed by something like *it feels good to let go* or *nothing leaves
+   this room*. Then, if you want it, another page.
+
+## An engine that listens
+
+Ritual began as a design exercise. Could a piece of software respond to *how*
+someone is writing, rather than *what* they write, and use light and sound to
+amplify what they are feeling, and then give them a release?
+
+**It never reads your words.** Nothing about the storm depends on what you write,
+only on the way you write it: how fast you are going compared with your own
+usual pace, how long you have been at it, how much you have written, when you
+pause, and when you begin a new paragraph. The words never leave the page, and
+the page never leaves your device.
+
+A handful of principles came out of that.
+
+- **It measures you against yourself.** Typing speed means nothing on its own. A
+  slow, careful writer who breaks into a sudden rush gets the same storm as a
+  fast typist doing the same, because the engine only cares about the change.
+- **The weather has to build.** A session opens in silence under a dry sky, and
+  the first minute can only unlock so much. The storm can never be louder than
+  the weather that has actually gathered.
+- **It rises quickly and falls slowly.** Feelings tend to arrive faster than they
+  leave, and so does the storm: seconds to swell, and much longer to settle.
+  Pausing to think never snaps it off.
+- **The session has a shape.** Writing builds the storm. Holding the seal is the
+  crescendo. Letting go is a single strike, then release, then calm. The colour
+  drains slightly out of the room as the storm rises, so when the clearing comes
+  it feels noticeably warmer and brighter than the room you started in.
+- **Everything is one response.** A single number drives the lighting, the sky,
+  the rain on the glass, the candle, the handwriting and every sound. The
+  thunder, the flicker on the wax and the shake in your letters are not separate
+  effects that happen to coincide. They are the same thing, reaching you through
+  different senses.
+
+---
+
+## How it works
+
+### One number
+
+`IntensityEngine` watches how you write and publishes a single value between 0
+and 1. The lighting engine, the sky, the glass, the candle, the dust in the air,
+the objects on the desk, the handwriting and every voice in the soundscape all
+read that one value. Nothing polls anything else.
+
+### The intensity meter
+
+Four influences are combined every frame.
+
+**1. The personal baseline, a flow detector.** Two speeds are tracked at once: an
+*instant* rate over the last five seconds, and your *session average* over the
+time you have actually spent writing. Long pauses are left out, so staring out of
+the window does not drag the average down. Absolute speed is irrelevant, and 30
+words a minute is treated exactly like 90. What counts is breaking into a sprint
+*relative to yourself*, which adds up to **+60%** on top of the floor. Until the
+engine has watched you for a while it does not know your pace, so it blends from
+a typical writer's speed towards your measured one over the first 30 seconds.
+Without that, an ordinary opening sentence would read as a colossal sprint,
+simply because the running average starts near zero.
+
+**2. The floor: time and volume.** As the entry grows in both minutes and
+characters, the *minimum* level of the storm rises. Time counts up to **3
+minutes** and volume up to **1,500 characters** (about 250 to 300 words), lifting
+the floor from **5% to 40%**. A long session never returns to a completely quiet
+sky, however long you pause.
+
+**3. The cold-start clamp.** For the first **20 seconds**, a burst of typing can
+only unlock part of the storm: none of it at the very start, half at 10 seconds,
+and all of it at 20. Hammering out your first sentence cannot summon a hurricane.
+
+**4. Asymmetric gliding.** The storm swells quickly and decays slowly: roughly
+**2 to 3 seconds** of sustained fast writing to reach full intensity, and **6 to 8
+seconds** to settle back to the floor when you stop.
+
+These numbers live in `INTENSITY_CONFIG` at the top of
+[src/intensity.js](src/intensity.js). The engine is pure, with no page and no
+audio in it, so its behaviour can be simulated offline.
+
+### Presence: how long it has been raining
+
+Intensity answers *how hard are you writing right now*. That is deliberately not
+the same question as *how long has it been raining*, so there is a second, much
+slower value called **presence**. It starts at zero and takes a couple of minutes
+of writing to reach one.
+
+A session opens with a dry sky and stays dry until you write. Within a few
+seconds of the first word a light rain starts: a thin fall outside the window,
+drops beginning to gather on the pane, and the odd tap on the glass. From there
+the weather thickens on its own slow clock, over minutes rather than seconds.
+Both the sound of the rain and the rain you can see are held back by presence.
+
+The music waits for the writing too. Nothing plays when the candle is lit. About
+five seconds after you start, the score begins to steal in beneath the rain, over
+eight seconds, so that it arrives as an answer to starting rather than as a
+soundtrack that was already playing when you sat down.
+
+### Punctuating moments
+
+| Moment | What happens |
+| --- | --- |
+| **Second paragraph** | A distant roll of thunder, guaranteed, with a faint bolt low in the far cloud. |
+| **Third paragraph** | A lightning strike, guaranteed: a clear bolt, and closer. |
+| **Later paragraphs** | Rolled against the current intensity. A quiet sky answers rarely and from far off; a raging one answers almost always, and close. Every strike shows its bolt. |
+| **Holding the seal** | The crescendo: a swell of about +0.20 above wherever you already are, over 2.4 seconds and under a ceiling, so it is clearly felt without being a jump cut. One distant rumble as the sky gathers, and otherwise nothing. |
+| **Letting go** | One enormous strike directly overhead. The flash holds the room white and takes seconds to fade, with deep thunder right behind it. Then the release: the heavy weather is cut away and the page goes to the candle. |
+| **After the burn** | Tranquillity. The score resolves to one open, sustained chord, the colour returns to the room, and the closing lines arrive one at a time over about eight seconds. |
+
+Turn on the meter in the info sheet to watch all of this live on a brass
+barometer, with the floor, the surge, the cold-start clamp and both rates broken
+out.
+
+### The soundscape
+
+Everything you hear is synthesised live, in the browser, with the Web Audio API.
+**There are no audio files in this repository.**
+
+The governing idea for the weather is that **you are indoors**. You are not
+standing in the rain; you are hearing it through a pane of glass and a roof.
+Broadband hiss is what rain sounds like when it is falling on you, and it swamps
+everything else, so there is none of it.
+
+- **Rain.** A dark, quiet bed of rain on the roof and garden, heard through a
+  wall; a less muffled layer that only arrives in heavy rain; and the part that
+  carries the character, the resonant *taps* of individual drops striking the
+  pane, spread across the stereo field because the window is wide. Light rain is
+  a few countable ticks. At the top of the storm they reach seventy a second and
+  run together into a patter, and one more layer arrives: water sheeting down the
+  glass, kept in the mid range and always moving, so that it trickles rather than
+  hisses.
+- **Wind.** Brown noise through a resonant band, with gusts built from
+  oscillators running at unrelated rates, so the pattern never audibly repeats.
+- **Thunder.** What makes synthesised thunder sound fake is a sharp transient,
+  which reads as a click or a door slamming. Thunder heard from inside has almost
+  no attack: it arrives, swells and rolls as the sound comes back off everything
+  between you and the strike. So the rumble's attack is slow even overhead, its
+  filter stays under 500Hz, a second delayed rumble comes back off the hills, and
+  most of the signal goes to a long, dark reverb. Distance changes the filter, the
+  length, the tail and the delay before you hear it.
+
+  A strike close enough to matter also has a **crack**, the air tearing just
+  before the rumble, which is what makes it read as lightning rather than as
+  weather. It is shaped to stay well away from a click: a 7ms onset rather than an
+  instant one, nothing above about 2.4kHz, and a crackle built from ramps between
+  points 5ms apart, so the waveform swells unevenly but never steps. Rendered
+  offline through the full audio chain, its sharpest step is less than half the
+  level of the sound around it, where a click would be several times that.
+- **The score.** Generative, in D aeolian, over an unresolved i–VI–III–iv
+  progression. Layers gather as the storm builds: a drone, then slow detuned
+  pads, then struck bell tones, a high glassy shimmer, and a low pulse near the
+  peak. Note density and register follow the intensity, so the music quickens
+  when you do and thins out when you stop.
+- **The pen on the paper.** One continuous voice rather than a sound per
+  keypress, because a sound per keypress is what a keyboard sounds like, not a
+  pen. It is held open while characters keep arriving and released after a real
+  pause, so a phrase is one unbroken stroke and stopping to think is heard as the
+  nib lifting. Each instrument shapes it: a pencil rasps, a ballpoint barely
+  whispers, a fountain pen lays down something wet and round, and a quill
+  scratches.
+
+A master low-pass filter works as a **distance** control. Calm weather is heard
+through a closed window, and as the storm builds the filter opens until the
+weather is effectively in the room. Three things bypass it: the pen, the fire and
+the drops on the pane. All three are right there in the room with you, and
+muffling them when the sky is calmest would be exactly backwards.
+
+### The view outside
+
+The landscape is four layers of depth rather than one silhouette, and each is
+recoloured relative to the sky at the horizon. At night, distance is carried
+almost entirely by contrast. The far ridge sits a shade lighter than the sky
+behind it, because haze scatters light towards you, and each nearer layer is
+darker and sharper. A single black cutout reads as scenery on a stage. Splitting
+it up is also what lets a strike light the edges of the near trees while the far
+ones only glow.
+
+The cottage across the field is drawn lit, rather than cut out of a silhouette. A
+hole in a silhouette gives you a bright rectangle floating in the dark; a wall
+you can see, with light spilling down it from its own windows and a slate roof
+catching the sky, is what makes the windows read as windows. They are
+deliberately different sizes at different heights, because two matching lit
+rectangles side by side look unmistakably like a pair of eyes.
+
+The trees bend with the storm, pivoting about their roots, and the rain on the
+glass gathers into drops that grow, merge and run.
+
+Three textures are generated when the app starts, in
+[src/scene/textures.js](src/scene/textures.js): cotton lace for the curtains,
+soft grime for the glass, and film grain over everything. The grain is dark noise
+blended with `screen` rather than grey noise with `overlay`, which on a scene
+this dark does almost nothing. Screen bites in the shadows and fades out in the
+highlights, which is how real film grain behaves. It changes thirty times a
+second, a rate that divides both 60Hz and 120Hz exactly, so every frame of grain
+is held for the same number of display frames.
+
+### The page
+
+The writing surface is a controlled `contenteditable`: a string of text is the
+single source of truth, and the page is rebuilt from it. That is what makes
+handwriting at the level of individual letters possible. Every letter is its own
+element, with its own rotation, offset, scale and ink density.
+
+Two details do most of the work.
+
+- **Stable wobble.** Each letter's wobble comes from a hash of its position and
+  the session, so it is repeatable. Re-draw the same text and the same letters
+  wobble the same way, so nothing shimmers as you type.
+- **Shared drift.** Neighbouring letters follow the same slow noise, so words
+  ride up and down together. Independent noise for every letter looks like a
+  ransom note; shared noise looks like a hand.
+
+On top of that, the ink wanders as the nib runs wet and dry, pools where a
+stroke begins after a lift and, with the quill, runs out entirely and has to be
+recharged. The handwriting also deteriorates as the storm rises: the wobble grows
+with the intensity, so writing fast in a tempest looks like it.
+
+### Choosing things
+
+There are no menus. Every control is the object it controls.
+
+| Object | What it is |
+| --- | --- |
+| **The tray** | Five instruments. Click one and it lifts out. |
+| **The bottles** | Six inks. The chosen bottle stands open and clinks as it is set down, pitched along the row so that each one sounds different. Graphite and charcoal bring their own colour, so the bottles dim. |
+| **The pile of paper** | Four paper stocks, each shown as the thing that paper comes out of: a bundle of loose sheets, a block of writing paper, a bound notebook and a ledger. |
+| **The specimen booklet** | Twelve handwriting styles. Flip through its pages. |
+| **The wax seal** | Press and hold to finish. |
+| **The tab on the page corner** | About Ritual, the settings, and a plain text box. |
+
+Underneath, they are real buttons, grouped as radio sets with arrow-key
+navigation and proper labels. Making things look like real objects should never
+cost you the keyboard.
+
+### Keeping it smooth
+
+A scene with this many layers is easy to make slow. On a laptop with Intel Iris
+Xe graphics at 175% scaling, an earlier version ran at around seventeen frames a
+second while you wrote. The fixes kept everything you can see:
+
+- **Light reaches the styles sparingly.** Changing a CSS variable at the top of a
+  page makes the browser restyle the whole document, and repaint everything that
+  uses any variable at all. The candle's fast flicker now lives in the canvases
+  and in the opacity of a single overlay, while the page, the desk and the objects
+  get a smoothed candle that is only written when it moves by a visible step.
+- **Soft things are drawn at soft resolutions.** The sky and clouds are painted at
+  half resolution and scaled up, and each layer of landscape is drawn only where
+  it actually contains something. Compared pixel by pixel with the original, the
+  difference averages less than one level in 255.
+- **Many small drawings become a few large ones.** The rain outside is drawn in
+  six bands of depth instead of one stroke per drop, and the wax seal is relit
+  thirty times a second rather than on every frame.
+
+On the same laptop, writing now runs at about twenty-eight frames a second, and
+heavy rain at about twenty-one, up from fourteen.
+
+## Accessibility and comfort
+
+- **A plain text box.** Behind the tab on the page corner, and kept in sync with
+  the page. If the handwriting is hard to read, or you would simply rather type,
+  write there instead.
+- **Calm the storm.** Stops the screen shake and the vibration, and is switched on
+  automatically if your system asks for reduced motion. The weather still runs.
+- **Volume**, and a mute that fades rather than cuts.
+- Every object can be focused, is labelled, and can be reached with the arrow
+  keys.
+- The focus ring is hidden on the writing surface only. A ring around the whole
+  sheet breaks the scene, and the text cursor already shows where you are. Every
+  other control keeps it.
+- Sound only starts when you light the candle, as browsers require.
+
+---
+
+## Get it
+
+**In your browser:** <https://ritual.harryjameschapman.com>. There is nothing to
+install. It works offline after your first visit, and Edge and Chrome will offer
+to install it as an app with its own window and icon.
+
+**On Windows:** [download Ritual.exe](https://github.com/HazzJC/writeitdownripitup/releases/latest/download/Ritual.exe).
+It is a single 4.7 MB file. Save it anywhere, double-click it, and write. There
+is no installer and nothing to set up.
+
+The first time you run it, Windows shows a blue box saying **"Windows protected
+your PC"**. This is not a virus warning. Windows shows it for every program that
+has not paid for a code-signing certificate, and this one has not. Click **More
+info**, then **Run anyway**. Windows only asks once.
+
+If you would rather have Ritual in your Start menu, there is also an installer on
+the [releases page](https://github.com/HazzJC/writeitdownripitup/releases/latest).
+The app is the same either way.
+
+## For developers
+
+Nothing below is needed to use Ritual.
 
 ```bash
 npm start              # dev server on http://localhost:5173
@@ -46,373 +375,136 @@ npm run build:single   # dist/ritual.html, the whole app in one file
 npm run build:desktop  # a Windows .exe and installer
 ```
 
-There is no build step for the website. Cloudflare Pages serves the repository
-root directly with the build command left empty, which is the most robust
-configuration available: nothing sits between a push and a working site that
-can fail. Every asset path is relative and the app makes no network requests
-once loaded, so the repo root simply *is* the site.
+The app is plain HTML, CSS and JavaScript modules, with no framework and no
+dependencies at runtime. The dev server exists only because JavaScript modules
+cannot be loaded straight from a file on disk.
 
-The dev server exists only because ES modules cannot be loaded over `file://`.
-
-### The three ways to run it
+### Three ways to run it
 
 | | Size | Needs |
 | --- | --- | --- |
 | **The website** | 2.1 MB | Nothing. Installable from Edge or Chrome, and works offline once visited. |
-| **`dist/ritual.html`** | 3.1 MB | Nothing at all — one file, double-click it. Works on any machine, including Macs. |
-| **`Ritual.exe`** | 4.7 MB | Windows with WebView2 (shipped with Windows 11). |
+| **`dist/ritual.html`** | 3.1 MB | Nothing at all. It is one file; double-click it. It works on any computer, including a Mac. |
+| **`Ritual.exe`** | 4.7 MB | Windows with WebView2, which comes with Windows 11. |
 
-The single file inlines everything as data URIs, so opening it makes exactly one
-request: the file itself. That is also why it is the only artefact that needs a
-bundler — modules are blocked over `file://`, so the 25 of them are flattened
-into one classic script with esbuild. esbuild is a devDependency; the website
-and the desktop build both ship the original source untouched.
+The single file carries everything inside itself, so opening it makes exactly one
+request: for the file itself. It is the only version that needs a bundler,
+because browsers will not load modules from a file on disk, so esbuild flattens
+them into one script. esbuild is only used while building; the website and the
+desktop app ship the original source untouched.
 
-The desktop build is the same web app in a WebView2 window, which is Chromium —
-so it renders identically to the site. Rust's only job is to open the window; no
-commands are registered and no capabilities are granted, because the app asks
-the host for nothing. Build prerequisites are Rust, MSVC build tools, and
-WebView2. It is unsigned, so Windows shows a SmartScreen prompt on first run.
+The desktop app is the same web app in a WebView2 window, which is Chromium, so it
+looks exactly like the website. Rust's only job is to open the window: no
+commands are registered and no permissions are granted, because the app asks the
+operating system for nothing. Building it needs Rust, the MSVC build tools and
+WebView2. The finished program is published on GitHub's releases page, and
+deliberately not committed to the repository, because git would keep every 4.7
+MB copy forever.
 
-The built binary is published to GitHub releases and is deliberately **not**
-committed. Git keeps every version of every file forever, so a 4.7 MB artefact
-added on each build would grow the repository without bound, for a file that is
-rebuilt from source anyway. The site links to the releases page rather than
-serving its own copy, for the same reason.
+### Deployment
 
-### Regenerating
+The website is the repository. Cloudflare publishes the root of the repository as
+a static site on every push to `main`, without a build step of its own, so there
+is very little that can break between a push and a working site. Every path is
+relative, and once loaded the app makes no network requests at all.
 
-Two files are generated and committed, and want re-running when assets change:
+[`.assetsignore`](.assetsignore) decides what is uploaded, and the answer is only
+the site: `index.html`, the icons and manifest, the service worker, `_headers`,
+`src/`, `styles/` and `assets/`. Everything else stays out, including
+`node_modules`, the desktop build and any `.exe`. Without it, the build's own
+dependencies were uploaded too, and Cloudflare's 25 MiB limit on a single file
+rejected every deploy.
+
+Two files are generated and committed, and need regenerating when the app's files
+change:
 
 ```bash
-npm run build:sw       # sw.js — the offline precache list and its version
-npm run build:icons    # favicon → every PNG size, plus the Windows .ico
+npm run build:sw       # sw.js: the list of files for offline use, and its version
+npm run build:icons    # favicon.svg to every icon size, plus the Windows .ico
 ```
 
-`sw.js` keys its cache to a hash of every file's contents, so a changed asset
-means a new cache name and the old one is dropped. Forgetting to re-run it is
-recoverable: `index.html` is fetched network-first precisely so a stale cache
-can always correct itself.
+`sw.js` ties its cache to a hash of every file's contents, so a changed file means
+a new cache, and the old one is thrown away. Forgetting to regenerate it is not
+fatal: `index.html` is always fetched from the network first, precisely so that a
+stale cache can put itself right.
 
----
+### Debugging
 
-## The idea
+- **Ctrl+Alt+D** opens the debug overlay, as does adding `?debug` to the address.
+  It graphs intensity and presence, prints every number the scene is reading, and
+  gives you a slider for each of the two values that drive the world. You can pin
+  the storm at nothing or at its peak, or sweep between them and watch every part
+  of the scene respond, instead of writing for three minutes to find out. It also
+  fires thunder and lightning on demand, and switches the pen, ink, paper and
+  handwriting. Nothing is built until you open it. The obvious shortcut,
+  Ctrl+Shift+D, bookmarks every open tab in Chrome and Edge, and a page cannot
+  stop that.
+- `window.ritual` is available in the browser console. `ritual.debugIntensity =
+  0.8` pins the storm at a chosen level and `ritual.debugIntensity = null` hands
+  control back. `ritual.debugPresence` does the same for the slower value.
 
-One number drives everything.
-
-`IntensityEngine` watches how you write and publishes a single `0…1` value.
-The lighting engine, the sky, the rain on the glass, the candle, the dust in
-the air, the props on the desk, the handwriting itself and every voice in the
-soundscape are all consumers of that one value. Nothing polls anything else.
-
-That is why the app hangs together: the thunder you hear, the flash in the
-window, the flicker on the wax, the wobble that creeps into your letters and
-the density of the rain on the pane are not separate effects that happen to
-fire at once. They are the same number, read six different ways.
-
----
-
-## The intensity meter
-
-Four influences, combined every frame.
-
-### 1. The personal baseline — a flow-state detector
-
-Two speeds are tracked at once: an **instant** rate over the last 5 seconds,
-and your **session average** over the time you have actually been writing
-(long pauses are excluded, so staring out of the window doesn't drag it down).
-
-Absolute speed is irrelevant. 30 wpm and 90 wpm are treated identically. What
-matters is breaking into a sprint *relative to yourself*. Being in the zone
-contributes up to **+60%** on top of the floor.
-
-Until it has watched you for a while it doesn't know your pace, so it blends
-from a typical writer's speed toward the measured one over the first 30 seconds
-of writing. Without that, an ordinary opening sentence reads as a colossal
-sprint purely because the running average is still near zero.
-
-### 2. The baseline floor — time and volume
-
-As the entry grows in both minutes and characters, the *minimum* level of the
-storm rises. Time maxes out at **3 minutes**, volume at **1,500 characters**
-(~250–300 words). The floor moves from **5% to 40%**, so a long session never
-returns to a completely quiet sky, however long you pause.
-
-### 3. The cold-start clamp
-
-For the first **20 seconds**, typing surges can only unlock a fraction of the
-storm's power — 0% at 0s, 50% at 10s, 100% at 20s. Hammering out your first
-sentence at speed cannot summon a hurricane.
-
-### 4. Asymmetrical gliding
-
-The storm swells quickly and decays slowly: roughly **2–3 seconds** of
-sustained fast writing to reach full intensity, and **6–8 seconds** to settle
-back to the floor when you stop. Pausing to think doesn't cut the sound; the
-thunder rolls away and leaves you a steady rain to sit in.
-
-These numbers are all in `INTENSITY_CONFIG` at the top of
-[src/intensity.js](src/intensity.js), and the engine is pure — no DOM, no
-audio — so its behaviour can be simulated offline.
-
-### Presence — how long it has been raining
-
-Intensity answers *how hard are you writing right now*. That is deliberately
-not the same question as *how long has it been raining*, so there is a second,
-much slower value: **presence**, which starts at zero and takes a couple of
-minutes of writing to reach one.
-
-A session therefore opens with a dry sky and no rain at all, and stays dry
-until you write. Within a few seconds of the first word a light rain starts: a
-thin fall outside the window, drops beginning to gather on the pane, the odd
-tap on the glass. From there the weather thickens on its own slow clock, over
-minutes rather than seconds, and the storm can only ever be as loud as the
-weather that has actually built up. Both the sound and the rain you can see are
-gated by presence.
-
-The music waits for the writing too. Nothing plays when the candle is lit.
-About five seconds after you start, the score begins to steal in beneath the
-rain over eight seconds, so it arrives as an answer to starting rather than as
-a soundtrack that was already playing when you sat down.
-
-### Punctuating moments
-
-| Moment | What happens |
-| --- | --- |
-| **Second paragraph** | A distant roll of thunder, guaranteed, with a faint bolt low in the far cloud |
-| **Third paragraph** | A lightning strike, guaranteed: a clear bolt, and closer |
-| **Later paragraphs** | Rolled against current intensity. A quiet sky answers rarely and from far off; a raging one answers almost always, and close. Every strike shows its bolt |
-| **Holding the seal** | The crescendo: a swell of about +0.20 above wherever you already are, over 2.4s, under a ceiling — clearly perceptible, but not a jump cut. One distant rumble as the sky gathers, and otherwise nothing |
-| **Letting go** | One enormous strike directly overhead — the flash holds the room white and takes seconds to fade, with deep thunder right behind it. Then the release: the heavy weather is cut and the page goes to the candle |
-| **After the burn** | Tranquility. The score resolves to one open sustained chord, the colour comes back into the room, and the closing lines arrive one at a time over about eight seconds |
-
-Turn the meter on in the info sheet to watch all of it live on a brass
-barometer, with the floor, surge, cold-start clamp and both rates broken out.
-
----
-
-## The soundscape
-
-Everything you hear is synthesised at runtime with the Web Audio API. **There
-are no audio files in this repository.**
-
-The governing idea for the weather is that **you are indoors**. You are not
-standing in the rain; you are listening to it through a pane of glass and a
-roof. Broadband hiss is what rain sounds like when it is falling on *you*, and
-it swamps everything else — so there is none of it.
-
-- **Rain** — a dark, quiet bed of rain on tiles and garden heard through a
-  wall; a slightly less muffled layer that only arrives in heavy rain; and the
-  thing that actually carries the character: discrete resonant *taps* of
-  individual drops striking the pane, spread across the stereo field because
-  the window is wide. Light rain is a few countable ticks. At the top of the
-  storm they reach seventy a second and run together into a patter, and one
-  more layer arrives: water sheeting down the glass, kept in the mids and
-  walked about constantly so that it trickles rather than hisses.
-- **Wind** — brown noise through a resonant band, with gusts built from
-  incommensurate LFOs so the pattern never audibly repeats.
-- **Thunder** — what makes synthesised thunder sound fake is a sharp
-  transient: it reads as a click, or a door slamming. Real thunder heard from
-  inside has almost no attack; it arrives, swells, and rolls while the sound
-  comes back off everything between you and it. So the rumble's attack is slow
-  even overhead, its filter stays under 500Hz, a second delayed rumble returns
-  off the hills, and most of the signal goes to a long dark reverb. Distance
-  changes the filter, the length, the tail, and the delay before you hear it.
-
-  A strike close enough to matter also has a **crack**: the air tearing just
-  before the rumble, which is what makes it read as lightning rather than as
-  weather. It is built to stay out of click territory, with a 7ms onset rather
-  than an instant one, nothing above about 2.4kHz, and a crackle envelope made
-  of ramps between points 5ms apart, so the waveform swells unevenly but never
-  steps. Rendered offline through the full master chain, its largest
-  sample-to-sample jump is at most 0.43 times the signal around it; a click is
-  several times that. And every strike now shows its bolt: faint and low in the
-  cloud for distant thunder, clear and close for lightning.
-- **The score** — generative, in D aeolian, over an unresolved i–VI–III–iv
-  progression. Layers accrete as the storm builds: a drone, then slow detuned
-  pads, then struck bell tones, then high glassy shimmer, then a low pulse near
-  the peak. Note density and register are driven by intensity, so the music
-  speeds up when you speed up and thins out when you stop. It stays silent
-  until you have been writing for a few seconds (see presence, above).
-- **The instrument on the paper** — one continuous voice, not a burst per
-  keypress, which is what a keyboard sounds like rather than a pen. It is held
-  open while characters keep arriving and released after a real pause, so a
-  phrase is one unbroken stroke and stopping to think is heard as the nib
-  lifting. Each instrument shapes it: a pencil rasps, a ballpoint barely
-  whispers, a fountain pen lays down something wet and round, a quill
-  scratches.
-
-A master low-pass filter acts as a **distance** control: calm weather is heard
-through a closed window, and as the storm builds the filter opens until the
-weather is effectively in the room. Three things deliberately bypass it — the
-pen, the fire, and the drops on the pane. All three are unambiguously in the
-room with you, and muffling them when the sky is calmest would be exactly
-backwards.
-
----
-
-## The view outside
-
-The landscape is drawn as four depth layers rather than one silhouette, and
-each is recoloured every frame relative to the sky at the horizon. That matters
-because distance at night is carried almost entirely by *contrast*: the far
-ridge sits a shade lighter than the sky behind it (haze scatters light toward
-you), and each nearer layer goes darker and sharper. A single black cutout
-reads as a stage flat. Splitting it up is also what lets a strike rim the near
-trees while the far ones merely glow.
-
-Recolouring is four full-canvas operations per layer, so each layer caches its
-tinted copy and only rebuilds when the colour would visibly differ — quantised
-to four levels, which turns a continuous fade from four rebuilds a frame into a
-handful in total.
-
-The cottage across the field is drawn *lit* rather than cut out of a
-silhouette. A hole in a silhouette gives you a bright rectangle floating in the
-dark with no building around it; a wall you can see, with light spilling down it
-from its own windows and a slate roof catching the sky, is what makes the
-windows read as windows. Its openings are deliberately different sizes at
-different heights — two matching lit rectangles side by side read unmistakably
-as a pair of eyes.
-
-The trees bend with the storm. The layers are cached bitmaps, so the bend is a
-horizontal skew — full displacement at the top of the frame, none at the
-bottom, pivoting the trunks about their roots. Drawing it as a stack of shifted
-bands gives a truer curved flex and costs a draw call per band per layer per
-frame; at this distance the difference is not visible and the cost is.
-
-Three textures are generated at startup and handed to CSS as data URIs
-([src/scene/textures.js](src/scene/textures.js)): a panel of cotton lace for
-the curtains, soft grime for the glass, and film grain over everything. The
-grain is dark noise blended with `screen`, not grey noise with `overlay` — on
-a scene this dark, overlay reduces to `2 × base × blend` and moves the result
-by about two levels out of 255, which is to say it does nothing. Dark noise
-through screen adds `blend × (1 − base)`, so it bites in the shadows and fades
-out in the highlights, which is also how real film grain behaves. It re-rolls
-thirty times a second: often enough to read as film rather than as a stutter,
-and a rate that divides both 60Hz and 120Hz exactly, so every position is held
-for the same number of display frames.
-
-## The page
-
-The writing surface is a controlled `contenteditable`: a JS string is the
-single source of truth and the DOM is rebuilt from it. That is what makes
-per-character handwriting possible — every glyph is its own inline-block with
-its own rotation, offset, scale and ink density.
-
-Two details do most of the work:
-
-- **Deterministic jitter.** Each character's wobble comes from a hash of its
-  index and the session seed, so it is stable. Re-render the same text and the
-  same letters wobble the same way; nothing shimmers as you type.
-- **Correlated drift.** Neighbouring characters share a slow noise, so words
-  ride up and down *together*. Independent per-letter noise looks like a ransom
-  note; correlated noise looks like a hand.
-
-On top of that, the ink flow wanders as the nib runs wet and dry, pools where a
-stroke begins after a lift, and — with the quill — runs out entirely and has to
-be recharged. And the hand deteriorates as the storm rises: the jitter grows
-with intensity, so writing fast in a tempest looks like writing fast in a
-tempest.
-
-Rendering is cached per line, so typing at the end of a long entry only rebuilds
-the line being written.
-
-## Choosing things
-
-There are no menus. Every control is the object it controls:
-
-| Object | What it is |
-| --- | --- |
-| The tray, bottom left | Five instruments. Click one and it lifts out. |
-| The bottles | Six inks. The chosen one stands open, and clinks as it is set down — pitched down the row, so the six are audibly distinct. Graphite and charcoal carry their own colour, so the bottles dim. |
-| The pile, far left | Four paper stocks, each as the object that paper comes out of — a bundle of loose sheets, a block of writing paper, a bound notebook, a ledger. |
-| The specimen booklet | Twelve hands. Flip its pages. |
-| The wax seal | Press and hold to finish. |
-| The tab on the page corner | This document, the settings, and a plain text box. |
-
-They are real buttons underneath, grouped as radio sets with arrow-key
-navigation and proper labels — skeuomorphism shouldn't cost you the keyboard.
-
----
-
-## Layout
+### Project layout
 
 ```
 index.html            the scene, and the SVG filters that tear the page's edges
-server.mjs            a static file server
+server.mjs            a static file server for development
 
 src/
-  intensity.js        THE METER — pure, no DOM, no audio
+  intensity.js        the meter: pure, with no page and no audio in it
   storm-events.js     when thunder and lightning are allowed to happen
-  main.js             bootstrap, the frame loop, and the arc of the ritual
+  main.js             start-up, the frame loop, and the arc of the ritual
 
-  core/               maths, seeded noise
+  core/               maths and seeded noise
   audio/
-    core.js           context, master chain, procedural reverb and noise buffers
-    weather.js        rain, wind, thunder
+    core.js           the audio context, master chain, reverb and noise
+    weather.js        rain, wind and thunder
     music.js          the generative score
     writing.js        the pen on the paper, and the fire
   scene/
-    textures.js       lace, film grain and grime, generated as data URIs
-    lighting.js       candle + lightning + ambient -> CSS, written sparingly
-    sky.js            what you see through the window, in four depth layers
-    glass.js          rain running down the pane
+    textures.js       lace, film grain and grime, generated at start-up
+    lighting.js       candle, lightning and ambient light, written to CSS sparingly
+    sky.js            the view through the window, in four layers of depth
+    glass.js          rain gathering on, and running down, the pane
     candle.js         soft-body flame physics
-    props.js          books and the jar, shaded by their angle to the flame
-    atmos.js          dust, embers, ash
+    props.js          the objects on the desk, shaded by their angle to the flame
+    atmos.js          dust, embers and ash
     burn.js           the page burning
   write/
-    hands.js          hands, instruments, inks, stocks
+    hands.js          handwriting styles, instruments, inks and paper
     paper.js          the writing surface
-  ui/                 the desk objects, the seal, the panels, haptics
+  ui/                 the desk objects, the seal, the panels, vibration, debugging
 
-styles/               base, scene, paper, ui, and the self-hosted fonts
-assets/               CC0 PBR textures and OFL fonts — see assets/CREDITS.md
+styles/               base, scene, paper and interface styles, and the fonts
+assets/               textures and fonts; see assets/CREDITS.md
 
 tools/
-  build-sw.mjs        generates sw.js (offline precache list + version)
-  build-icons.mjs     favicon.svg -> every PNG size, and the Windows .ico
+  build-sw.mjs        generates sw.js
+  build-icons.mjs     favicon.svg to every icon size
   build-single.mjs    the one-file build
-  build-dist.mjs      the clean tree the desktop build bundles
+  build-dist.mjs      the clean copy the desktop build packages
 
 src-tauri/            the desktop shell: a window, and nothing else
-_headers              Cloudflare Pages caching and security headers
-sw.js                 GENERATED — do not edit
+_headers              caching and security headers
+.assetsignore         what Cloudflare may publish, and what it may not
+sw.js                 generated; do not edit by hand
 ```
 
----
+## Credits
 
-## Accessibility and comfort
+The wood and paper textures come from [ambientCG](https://ambientcg.com) and are
+in the public domain (CC0). The handwriting and type faces come from
+[Google Fonts](https://fonts.google.com), under the SIL Open Font License or the
+Apache License. Every sound is synthesised in the browser, so there are no
+recordings. The details are in [assets/CREDITS.md](assets/CREDITS.md).
 
-- **Plain text box.** Behind the tab on the page corner, kept in two-way sync.
-  If the handwriting is hard to read, or you would rather just type, write
-  there instead.
-- **Calm the storm.** Stops the screen shake and the haptics, and is on by
-  default if the OS asks for reduced motion. The weather still runs.
-- **Volume**, and a mute that fades rather than cuts.
-- Every object is focusable, labelled, and reachable with arrow keys.
-- The focus ring is suppressed on the writing surface only — a 2px ring around
-  the whole sheet destroys the scene, and a text caret is already an
-  unambiguous focus indicator. Every other control keeps it.
-- Audio only starts on the opening gesture, as browsers require.
+## Further reading
 
-## Notes
-
-- No build step, no dependencies, no network calls at runtime.
-- Fonts and textures are bundled, so it works offline.
-- **Ctrl+Alt+D** opens the debug overlay (or add `?debug` to the URL). It
-  tracks intensity and presence on a rolling graph, prints every number the
-  scene is reading, and gives you a slider for each of the two values that
-  drive the whole world — so you can pin the storm at 0, at 1, or sweep it
-  through the range and watch each subsystem respond, instead of writing for
-  three minutes to see what happens. It also fires thunder and lightning on
-  demand and switches hand, pen, ink and paper. Nothing is built until you
-  open it.
-
-  Ctrl+Alt+D rather than Ctrl+Shift+D because the latter is "bookmark all
-  tabs" in Chrome and Edge, and a page cannot preventDefault a browser-level
-  shortcut.
-- `window.ritual` is exposed for poking at in the console. Setting
-  `ritual.debugIntensity = 0.8` pins the storm at a chosen level;
-  `ritual.debugIntensity = null` hands control back to the meter.
-  `ritual.debugPresence` does the same for the slower one.
+- Baikie, K. A. and Wilhelm, K. (2005).
+  [Emotional and physical health benefits of expressive writing](https://www.cambridge.org/core/journals/advances-in-psychiatric-treatment/article/emotional-and-physical-health-benefits-of-expressive-writing/ED2976A61F5DE56B46F07A1CE9EA9F9F).
+  *Advances in Psychiatric Treatment*. A review of the research that grew out of
+  Pennebaker's first studies.
+- Kanaya, Y. and Kawai, N. (2024).
+  [Anger is eliminated with the disposal of a paper written because of provocation](https://www.nature.com/articles/s41598-024-57916-z).
+  *Scientific Reports*. The Nagoya University study on throwing the page away.
+- [How unsent letters helped me find words](https://www.bps.org.uk/psychologist/how-unsent-letters-helped-me-find-words).
+  *The Psychologist*, from the British Psychological Society.
