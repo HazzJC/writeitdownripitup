@@ -508,3 +508,99 @@ recordings. The details are in [assets/CREDITS.md](assets/CREDITS.md).
   *Scientific Reports*. The Nagoya University study on throwing the page away.
 - [How unsent letters helped me find words](https://www.bps.org.uk/psychologist/how-unsent-letters-helped-me-find-words).
   *The Psychologist*, from the British Psychological Society.
+
+---
+
+## Appendix: technical verification
+
+The sections above are the project as it is meant to be read. This appendix is
+narrower: it is a plain record of what was actually checked in the code and the
+running site, for anyone who wants evidence rather than assurance.
+
+### Privacy claim, verified
+
+The README says "nothing is saved and nothing is sent." That was checked three
+ways against the live site and the source in this repository:
+
+1. **No code path exists that could send the text anywhere.** A search of every
+   file in `src/` for `fetch(`, `XMLHttpRequest`, `WebSocket`, `sendBeacon`,
+   `localStorage`, `sessionStorage`, and `indexedDB` returns zero matches. There
+   is no analytics library, no error-reporting SDK, and no code that reads the
+   page's text outside the modules that render it
+   ([`src/write/paper.js`](src/write/paper.js)) and burn it
+   ([`src/scene/burn.js`](src/scene/burn.js)).
+2. **The one network-capable file was read in full.** [`sw.js`](sw.js), the
+   service worker, is the only file with `fetch` calls in the whole project.
+   It precaches static assets (scripts, styles, fonts, textures) for offline
+   use and serves them cache-first; it never touches the writing surface or
+   posts anything. `_headers` confirms the deployed site adds no
+   `Content-Security-Policy` (the handwriting engine needs `unsafe-inline`
+   styles to jitter each letter), which is a deliberate trade-off, not an
+   oversight — see the comment in [`_headers`](_headers).
+3. **Observed at runtime.** The live site
+   (<https://ritual.harryjameschapman.com>) was loaded in a browser with
+   network logging on, a full sentence was typed into the page, and the
+   candle was lit. Every request captured was a `GET` for a static asset
+   (`index.html`, the CSS/JS modules, woff2 fonts, jpg textures) — nothing
+   carrying the written text, and no `POST` of any kind, at any point in the
+   session.
+
+Taken together: the privacy claim holds. There is no account, no server-side
+component that receives page content, and no client-side storage of it either
+— the text lives only in the DOM (`contenteditable`) for the length of the
+session and is discarded when the tab closes or the page burns.
+
+### Architecture, briefly
+
+No framework, no runtime dependencies. Plain ES modules loaded directly by the
+browser (`src/main.js` as the entry point), a Web Audio graph synthesising
+every sound live, and a canvas/DOM scene driven by the single `IntensityEngine`
+value described above. `server.mjs` is a zero-dependency static file server
+used only in local development, because `file://` cannot load ES modules.
+`esbuild` (dev-only) flattens the modules into one file for `dist/ritual.html`
+and the Tauri desktop build; the deployed website ships the untouched source.
+Full detail is in "How it works" and "For developers" above.
+
+### Installation / local setup
+
+```bash
+git clone https://github.com/HazzJC/writeitdownripitup.git
+cd writeitdownripitup
+npm install
+npm start          # http://localhost:5173
+```
+
+`npm run build:single` produces `dist/ritual.html`, a self-contained file that
+opens directly in a browser with no server. `npm run build:desktop` requires
+Rust, the MSVC build tools and WebView2, and produces the Windows build; that
+step was not exercised as part of this review.
+
+### Testing
+
+There is no automated test suite in this repository at the time of this
+review: no `*.test.js`/`*.spec.js` files, no test runner in
+[`package.json`](package.json), and no CI workflow (no `.github/workflows`
+directory). The project's own note in `src/intensity.js` — that the intensity
+engine is "pure, with no page and no audio in it, so its behaviour can be
+simulated offline" — describes code that is *structured* to be testable,
+but no such tests currently exist. Verification for this review was manual:
+static code search plus a live run against the deployed site, as described
+above.
+
+### Product decisions worth naming
+
+- **No save, no draft, no history, by design.** The whole premise — that you
+  can write the true thing because no one, including a future version of you
+  scrolling back through drafts, will ever read it — depends on there being
+  nothing left afterward. Adding persistence would not be a neutral feature;
+  it would undercut the one promise the app makes.
+- **No CSP, deliberately.** Noted above: a strict `style-src` would silently
+  flatten the handwriting jitter that makes the page look handwritten rather
+  than typed, with no error and no visible failure mode except the app quietly
+  looking wrong. Given there is no third-party content and all text is
+  escaped before it is rendered, the team judged the CSP not worth what it
+  would cost.
+- **A static site with no backend at all**, rather than a server that
+  promises not to log anything. The privacy claim is stronger for being
+  architecturally true rather than policy-true: there is no server-side code
+  path to audit because there is no server-side code.
