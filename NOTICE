@@ -1,0 +1,10 @@
+Ritual (writeitdownripitup)
+Copyright (c) 2026 Harry Chapman
+
+Code & Procedural Audio License:
+The software source code and runtime Web Audio synthesis routines are licensed under the MIT License (see LICENSE).
+
+Third-Party Assets:
+- Textures in assets/textures/ are CC0 1.0 Universal (Public Domain) via ambientCG.
+- Fonts in assets/fonts/ are licensed under the SIL Open Font License 1.1 or Apache License 2.0 via Google Fonts.
+See assets/CREDITS.md for complete attribution details.
